@@ -1,0 +1,142 @@
+\section{Proof of the Finite Law}
+\label{app:proof}
+
+Let the finite pool contain $m$ candidates and let group $g$ contain all candidates with one tied score value. The event that the selected maximum score lies in group $g$ is the event that all $N$ iid draws have score no higher than group $g$ and not all draws have score strictly lower than group $g$. Since $U_g$ candidates have score no higher than the group and $L_g$ candidates have score strictly lower, the probability of this event is
+\[
+\left(\frac{U_g}{m}\right)^N -
+\left(\frac{L_g}{m}\right)^N.
+\]
+Conditional on this event, uniform tie breaking within the selected score group gives expected utility $\bar R_g$. Summing these disjoint events over score groups proves Equation~\ref{eq:finite-law}. Replacing $\bar R_g$ with the group mean score yields the expected selected-score curve.
+
+\section{Experiment Details}
+\label{app:details}
+
+The controlled generator is implemented in \path{src/tokenized_world_best_of_n/simulation.py}. It first builds synthetic observations with an omitted hidden physical mode, fits a small VQ codebook, and estimates per-token frequency, alias probability, quantization error, and transition statistics. Candidate pools are then sampled from four candidate kinds:
+\begin{itemize}
+\item \texttt{alias}: high token likelihood and decoded reward, high physical violation, hidden-mode error, and low real utility;
+\item \texttt{rare\_good}: lower token likelihood, low physical violation, and high real utility;
+\item \texttt{bad\_low}: low score and low utility;
+\item \texttt{valid}: moderate score, low violation, and moderate utility.
+\end{itemize}
+
+The main run uses $150$ pools, pool size $64$, and $N\in\{1,2,4,8,16,32,64\}$. All methods are evaluated on the same generated candidates. The exact law is validated against Monte Carlo draws from the raw-score empirical pool.
+
+\begin{table}[h]
+\caption{Learned VQ artifact used in the main run.}
+\label{tab:vq-artifact}
+\centering
+\small
+\begin{tabular}{@{}lr@{}}
+\toprule
+Quantity & Value \\
+\midrule
+Codebook size & 8 \\
+Collision rate & 0.232 \\
+Mean quantization error & 0.120 \\
+Token entropy & 2.946 \\
+Mean transition self-probability & 0.137 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Repair Score Definitions}
+\label{app:repair}
+
+Let $S^{\mathrm{raw}}$, $a$, $q$, $d$, $v$, and $b$ denote raw score, alias probability, quantization error, decode-consistency error, physical violation, and rare-token bonus. The implemented diagnostic scores are
+\[
+S^{\mathrm{codebook}} = S^{\mathrm{raw}} - 0.85a - 0.25q,
+\]
+\[
+S^{\mathrm{decode}} = S^{\mathrm{raw}} - 0.95d - 0.75v,
+\]
+\[
+S^{\mathrm{filter}} =
+\begin{cases}
+S^{\mathrm{raw}} - 2.0, & v > 0.45,\\
+S^{\mathrm{raw}} - 0.35a, & v \leq 0.45,
+\end{cases}
+\]
+\[
+S^{\mathrm{rare}} = S^{\mathrm{raw}} - 0.75a + 0.35b - 0.55v.
+\]
+The pilot calibrator is a ridge regressor from eight token diagnostics to real utility, trained on the first $16\%$ of generated candidates with a minimum of twelve pilot labels. The combined repair is
+\[
+S^{\mathrm{combined}} =
+0.15S^{\mathrm{codebook}}
++0.15S^{\mathrm{decode}}
++0.25S^{\mathrm{filter}}
++0.45S^{\mathrm{calibrated}}.
+\]
+These weights are fixed in the repository implementation and are not tuned per figure.
+
+\section{Additional Diagnostics}
+\label{app:alias-atlas}
+
+Figure~\ref{fig:alias-atlas} visualizes the alias atlas. The purpose is diagnostic rather than aesthetic: token cells with higher alias probability and larger decode/physical errors are the cells that raw high-$N$ selection tends to over-select.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.86\linewidth]{figures/figure6_alias_atlas.png}
+\caption{Alias atlas for the controlled tokenized world model. Raw high-score selection concentrates in token regions where hidden-mode aliasing and decoded physical invalidity are high.}
+\label{fig:alias-atlas}
+\end{figure}
+
+\section{Artifact Map}
+\label{app:artifacts}
+
+\begin{table}[h]
+\caption{Primary artifact map.}
+\label{tab:artifact-map}
+\centering
+\small
+\begin{tabular}{@{}p{0.30\linewidth}p{0.58\linewidth}@{}}
+\toprule
+Claim family & Evidence \\
+\midrule
+Raw aliasing failure & \path{results/metrics_main.csv}; \path{figures/figure1_token_likelihood_physical_aliasing.png} \\
+Repair comparison & \path{results/metrics_main.csv}; \path{figures/figure2_repair_comparison.png} \\
+Codebook bottleneck & \path{results/codebook_bottleneck.csv}; \path{figures/figure3_codebook_bottleneck_curve.png} \\
+Decode diagnostics & \path{results/tail_autopsy.csv}; \path{figures/figure4_decode_validity_diagnostics.png}; \path{figures/figure6_alias_atlas.png} \\
+Exact finite law & \path{results/exact_law_validation.json}; \path{figures/figure5_exact_law_validation.png}; \path{src/tokenized_world_best_of_n/law.py} \\
+Claim audit & \path{results/claims_status.json}; \path{results/claims_status.md}; \path{docs/final_audit.md} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Claim Checklist}
+\label{app:checklist}
+
+\begin{table}[h]
+\caption{Submission claim checklist.}
+\label{tab:checklist}
+\centering
+\small
+\begin{tabular}{@{}p{0.72\linewidth}p{0.14\linewidth}@{}}
+\toprule
+Check & Status \\
+\midrule
+Scientific object is a tokenized/VQ world model. & Yes \\
+Generator emits discrete world-token futures. & Yes \\
+Scorer includes token likelihood and decoded reward. & Yes \\
+Real utility is measured separately from token score. & Yes \\
+Central failure is token-likelihood physical aliasing. & Yes \\
+Learned/semi-learned VQ artifact is included. & Yes \\
+Repair methods are token-specific. & Yes \\
+Exact finite law is implemented and validated. & Yes \\
+External benchmark or hardware deployment evidence is claimed. & No \\
+Universal repair or universal high-$N$ harm is claimed. & No \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Reproduction Commands}
+\label{app:commands}
+
+From the repository root:
+\begin{verbatim}
+bash scripts/run_all.sh
+bash scripts/run_claim_audit.sh
+pytest
+powershell -ExecutionPolicy Bypass -File paper/iclr/build.ps1
+\end{verbatim}
+The paper source is in \path{paper/iclr/}. The build script writes \path{paper/iclr/main.pdf} and copies the submission PDF to \path{C:/Users/wangz/Downloads/tokenized_world_model_iclr2027_submission.pdf}.

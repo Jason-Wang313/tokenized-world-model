@@ -1,0 +1,265 @@
+\documentclass{article}
+\usepackage{iclr2026_conference,times}
+\input{math_commands.tex}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{url}
+
+\title{When World Tokens Lie:\\Best-of-$N$ Inference Laws for Tokenized World Models}
+
+% Leave \iclrfinalcopy commented for anonymous review submissions.
+\author{Anonymous Authors\\Paper under double-blind review}
+
+\newcommand{\bon}{Best-of-$N$}
+\newcommand{\twma}{token-likelihood physical aliasing}
+\newcommand{\real}{\mathrm{real}}
+\newcommand{\tok}{\mathrm{tok}}
+
+\newtheorem{theorem}{Theorem}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Tokenized world models compress continuous observations or states into discrete codebook tokens and predict future token sequences. This paper studies a test-time selection question: what happens when a planner samples $N$ token futures and executes the one with the highest internal token score? We show, in controlled tokenized/VQ settings, that larger $N$ can improve selected token likelihood while worsening real decoded utility when the codebook aliases physically distinct futures. We call this \twma{}. We give an exact finite, tie-aware \bon{} law for the selected real-utility curve and validate it by Monte Carlo with mean absolute error $0.00276$. In the main controlled run, raw selection at $N=64$ raises selected token likelihood to $1.386$ while real utility falls to $0.0556$ and alias/physical-violation rates reach $1.0$. A combined token-specific repair raises real utility to $0.629$ and drops both rates to $0.0$, while an oracle reaches $0.957$, leaving a clear gap. The results are diagnostic rather than universal: they do not establish external benchmark performance, hardware deployment evidence, or a general indictment of tokenized world models.
+\end{abstract}
+
+\section{Introduction}
+
+Discrete world tokens are appealing because they turn continuous, high-dimensional prediction into a compact symbolic or codebook-indexed sequence problem. A tokenizer can absorb visual detail, a learned transition model can predict future token sequences, and a planner can search over token futures rather than raw states. This pattern appears in VQ-style representation learning, latent world models, and model-based planning systems that separate a compact predictive state from downstream selection.
+
+The same bottleneck creates a planning-specific risk. A token future can be likely under the token model while representing several physically different decoded futures. If the internal score sees only the token sequence, decoded reward, or a token critic, it can assign high score to a future whose real execution is low value because hidden modes, physical validity, or decoder consistency were collapsed by the codebook. We study this as \emph{\twma{}}.
+
+\bon{} selection stresses the issue. A planner samples $N$ candidate futures and selects the highest-scoring one. Increasing $N$ concentrates selection on the upper tail of the score distribution. When the score tail is aligned with real utility, this is useful. When the score tail is physically aliased, larger $N$ can select invalid decoded futures more reliably. The failure is therefore not ``more samples are bad''; it is ``more samples search harder through whatever score tail the token model exposes.''
+
+This paper is a diagnosis-and-repair package for that mechanism. The contribution is deliberately scoped:
+
+\begin{enumerate}
+\item We formalize finite token-future selection and give an exact tie-aware \bon{} law for the expected selected real utility of any fixed empirical candidate pool.
+\item We identify \twma{} as a concrete failure mode in which token likelihood rises while decoded/executed utility falls.
+\item We provide controlled VQ/tokenized evidence, including learned codebook artifacts, codebook-size sweeps, decode-validity diagnostics, and exact-law validation.
+\item We test token-specific repairs: codebook uncertainty, alias detection, decode-consistency penalties, physical-validity filtering, rare-mode reweighting, and a small token-to-real pilot calibrator.
+\item We package the evidence with an audit discipline that limits claims to controlled settings where aliasing is measurable or pilot labels are collected.
+\end{enumerate}
+
+Our claim is not that tokenized world models are broadly flawed, nor that \bon{} is broadly unsafe. The claim is narrower and testable: if the selected score aliases physical utility, high-$N$ selection can amplify the aliasing tail; token-specific diagnostics and pilot calibration can repair this in controlled detectable cases.
+
+\section{Setup}
+\label{sec:setup}
+
+Let $x_{0:H}$ denote a physical future and $z_{0:H}=q_\phi(x_{0:H})$ its tokenized representation under a learned codebook. A tokenized world model samples future token sequences from a generator $p_\theta(z_{1:H}\mid z_0,a_{0:H})$ or from an induced candidate pool. A decoder or downstream evaluator maps tokens back to predicted observations, rewards, or constraints.
+
+For each candidate future $c_i$, we distinguish three quantities:
+\begin{itemize}
+\item a token score $S_i$, such as token likelihood, decoded reward, or a learned token critic;
+\item a real utility $R_i$, measured after decoding or executing the corresponding physical future with hidden-mode and validity penalties;
+\item diagnostics $D_i$, including alias probability, quantization error, decode-consistency error, physical-violation indicators, and rare-token statistics.
+\end{itemize}
+
+The separation between $S_i$ and $R_i$ is essential. In the controlled environment used here, the tokenizer is trained on observable coordinates while a hidden physical mode influences real utility. This makes it possible for multiple physical futures to share token cells or near-identical token scores while differing in validity and utility. We call a candidate \emph{aliased} when its token representation hides a physically important distinction that affects $R_i$ but is weakly represented in $S_i$.
+
+\bon{} selection draws $N$ candidates independently from a finite empirical pool and returns an index with maximal score, breaking score ties uniformly. The selected real utility is $R^{\mathrm{sel}}_N$. We study the curve
+\[
+N \mapsto \mathbb{E}[R^{\mathrm{sel}}_N],
+\]
+and compare it for raw token scores, repaired scores, and an oracle real-utility score.
+
+\section{Exact Finite Law}
+\label{sec:law}
+
+The central law is finite-population, tie-aware, and score-agnostic. It applies to token likelihood, a repaired diagnostic score, an oracle score, or any other scalar selector.
+
+\begin{theorem}[Tie-aware finite \bon{} law]
+Consider a finite candidate pool $\{(S_i,R_i)\}_{i=1}^m$. Partition the candidates into score-tie groups $g$ sorted by increasing score. Let $L_g$ be the number of candidates with score strictly lower than group $g$, let $U_g$ be the number of candidates with score no higher than group $g$, and let $\bar R_g$ be the mean real utility within group $g$. If $N$ candidates are sampled iid uniformly from the pool and the highest-score tie group is broken uniformly, then
+\begin{equation}
+\mathbb{E}[R^{\mathrm{sel}}_N]
+= \sum_g \bar R_g
+\left[
+\left(\frac{U_g}{m}\right)^N
+- \left(\frac{L_g}{m}\right)^N
+\right].
+\label{eq:finite-law}
+\end{equation}
+\end{theorem}
+
+The proof is a one-line decomposition over the event that the maximum sampled score falls in group $g$; Appendix~\ref{app:proof} gives the details. Equation~\ref{eq:finite-law} immediately explains both success and failure. The expected selected score is nondecreasing in $N$ because the sample maximum is nondecreasing. The expected selected real utility has no such monotonicity unless high-score groups also have high real utility. A low-utility top score group becomes more likely as $N$ grows.
+
+The law is not asymptotic and does not assume continuous scores. This matters for tokenized world models because ties and near-ties are common: codebook cells merge many continuous states, token likelihoods can be quantized or smoothed, and decoded reward can saturate.
+
+\section{Token-Specific Diagnostics and Repairs}
+\label{sec:method}
+
+The repair methods target the token bottleneck rather than generic score smoothing. Each candidate receives the raw token score
+\[
+S_i^{\mathrm{raw}} = 0.70 \cdot \ell_i^{\tok}
+ + 0.35 \cdot \hat r_i^{\tok}
+ - 0.04 \cdot e_i^{\mathrm{q}}
+ + \epsilon_i,
+\]
+where $\ell_i^{\tok}$ is token likelihood, $\hat r_i^{\tok}$ is decoded reward, $e_i^{\mathrm{q}}$ is quantization error, and $\epsilon_i$ is small score noise in the controlled generator. Real utility is evaluated separately and penalizes hidden-mode mismatch and physical invalidity.
+
+We evaluate six repair families.
+
+\paragraph{Codebook uncertainty.}
+This score penalizes token-level alias probability and normalized quantization error. It asks whether the selected candidate lies in a codebook cell known to merge hidden modes or reconstruct poorly.
+
+\paragraph{Decode consistency.}
+This score penalizes disagreement between token-implied futures and decoded physical futures, together with physical-violation scores. It is designed for cases where the token model predicts a plausible code sequence that decodes into an impossible trajectory.
+
+\paragraph{Physical filter.}
+This score applies a hard penalty when a candidate crosses a physical-violation threshold, then applies a lighter alias penalty to the remaining candidates. In this paper the filter uses generated diagnostics; in a deployment it would require task-specific validity checks.
+
+\paragraph{Rare-mode reweighting.}
+This score rewards rare tokens while penalizing alias and violation diagnostics. It tests whether the raw score is discarding rare but valid high-utility futures.
+
+\paragraph{Token-to-real pilot calibration.}
+A small ridge calibrator maps token diagnostics to real utility using a pilot fraction of labeled candidates. This is the only repair that uses real-utility labels. It is therefore powerful but not free.
+
+\paragraph{Combined repair and gate.}
+The combined score averages codebook uncertainty, decode consistency, physical filtering, and pilot calibration with fixed weights. A deployment gate inspects high-$N$ alias rate, physical-violation rate, raw utility drop, repair gain, and exact-law error. In the main run the gate returns \texttt{collect\_pilot\_labels}, because pilot calibration repairs a harmful high-$N$ tail but the raw selector is unsafe.
+
+\section{Experiments}
+\label{sec:experiments}
+
+All experiments are CPU-local controlled experiments. The goal is to isolate the token-tail mechanism, not to claim external benchmark or hardware performance. The repository includes every primary artifact under \path{results/} and \path{figures/}.
+
+\paragraph{World-token construction.}
+We generate synthetic physical observations with an omitted hidden mode, train a small VQ tokenizer, and estimate token frequency, transition statistics, quantization error, and alias probability. The main learned artifact uses codebook size $8$, collision rate $0.232$, mean quantization error $0.120$, token entropy $2.946$, and transition self-probability $0.137$.
+
+\paragraph{Candidate pools.}
+For each of $150$ pools with $64$ candidates, the generator emits a mixture of valid candidates, aliased candidates, rare-good candidates, and low-quality candidates. The raw score favors high token likelihood and decoded reward. Real utility is clipped to $[-0.05,1.0]$ after hidden-mode and physical-validity penalties. We evaluate $N\in\{1,2,4,8,16,32,64\}$.
+
+\paragraph{Artifacts.}
+The main metrics are in \path{results/metrics_main.csv}; tail autopsy rows are in \path{results/tail_autopsy.csv}; exact-law validation is in \path{results/exact_law_validation.json}; and claim status is in \path{results/claims_status.json}. Figure~\ref{fig:failure} shows the raw failure curve.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.82\linewidth]{figures/figure1_token_likelihood_physical_aliasing.png}
+\caption{Raw \bon{} selection amplifies token-likelihood physical aliasing. As $N$ grows, selected token likelihood rises, but selected real utility falls because the high-score tail is dominated by aliased and physically invalid decoded futures.}
+\label{fig:failure}
+\end{figure}
+
+\subsection[Raw High-N Selection Selects the Wrong Tail]{Raw High-$N$ Selection Selects the Wrong Tail}
+\label{sec:raw-results}
+
+Raw token selection looks better if one watches only token likelihood. At $N=1$, selected token likelihood is $0.838$ and selected real utility is $0.393$. At $N=64$, selected token likelihood rises to $1.386$, but real utility falls to $0.0556$. Alias rate and physical-violation rate both reach $1.0$, and decode-consistency error reaches $0.613$.
+
+This is exactly the tail effect predicted by Equation~\ref{eq:finite-law}. The selected score improves because the maximum score improves. The selected real utility falls because the upper score group is dominated by aliased candidates.
+
+\begin{table}[t]
+\caption{Main selected-tail statistics. Raw high-$N$ selection improves token likelihood while collapsing real utility. Repairs reduce detected aliasing and physical invalidity, but oracle selection remains substantially better.}
+\label{tab:main}
+\centering
+\small
+\begin{tabular}{@{}llrrrrr@{}}
+\toprule
+Selector & $N$ & Token likelihood & Real utility & Alias rate & Violation rate & Decode error \\
+\midrule
+Raw token score & 1 & 0.838 & 0.393 & 0.387 & 0.467 & 0.450 \\
+Raw token score & 64 & 1.386 & 0.0556 & 1.000 & 1.000 & 0.613 \\
+Combined repair & 64 & 0.755 & 0.629 & 0.000 & 0.000 & 0.274 \\
+Pilot calibrator & 64 & 0.463 & 0.819 & 0.000 & 0.000 & 0.299 \\
+Oracle real utility & 64 & 0.488 & 0.957 & 0.000 & 0.000 & 0.317 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Repair Helps, But Does Not Close the Oracle Gap}
+\label{sec:repair-results}
+
+Figure~\ref{fig:repair} compares raw selection, individual repairs, combined repair, the pilot calibrator, and oracle selection. The combined repair raises real utility at $N=64$ from $0.0556$ to $0.629$ and drops both alias and violation rates from $1.0$ to $0.0$. The standalone pilot calibrator reaches $0.819$, showing the value of small real-utility labels in this controlled setting. Oracle real-utility selection reaches $0.957$.
+
+The gap is important. The combined repair leaves an oracle gap of $0.327$ at $N=64$, and even the pilot calibrator leaves a gap of $0.138$. We therefore treat repair as conditional evidence for detectable aliasing, not as a universal fix.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.86\linewidth]{figures/figure2_repair_comparison.png}
+\caption{Token-specific repairs can redirect high-$N$ selection away from aliased futures. The strongest label-based pilot calibrator is intentionally separated from hand-coded diagnostics because it spends real-utility labels.}
+\label{fig:repair}
+\end{figure}
+
+\subsection{Codebook Bottlenecks and Decode Diagnostics}
+\label{sec:diagnostics-results}
+
+The codebook-size sweep tests whether the failure is merely a small-codebook artifact. As codebook size increases from $4$ to $24$, mean quantization error decreases from $0.159$ to $0.070$, but collision rates remain near $0.24$--$0.27$ because the hidden physical mode remains omitted. Raw $N=64$ real utility stays low, between $0.038$ and $0.089$, while combined repair gains remain between $0.553$ and $0.622$.
+
+Decode diagnostics localize the selected bad tail. In the tail autopsy, raw $N=64$ selections are aliased candidates with high token likelihood, high physical-violation scores, and low real utility. Combined repair selections are mostly valid candidates with lower violation scores. Figure~\ref{fig:bottleneck-diagnostics} shows both the codebook sweep and the diagnostic distributions.
+
+\begin{figure}[t]
+\centering
+\begin{minipage}{0.49\linewidth}
+\centering
+\includegraphics[width=\linewidth]{figures/figure3_codebook_bottleneck_curve.png}
+\end{minipage}
+\hfill
+\begin{minipage}{0.49\linewidth}
+\centering
+\includegraphics[width=\linewidth]{figures/figure4_decode_validity_diagnostics.png}
+\end{minipage}
+\caption{Left: increasing codebook size reduces quantization error but does not remove hidden-mode collisions in this controlled setup. Right: token-specific diagnostics separate raw high-score aliased candidates from repaired valid selections.}
+\label{fig:bottleneck-diagnostics}
+\end{figure}
+
+\subsection{Exact-Law Validation}
+\label{sec:law-results}
+
+For fixed empirical pools, Equation~\ref{eq:finite-law} gives the expected selected real utility exactly. We validate the implementation against Monte Carlo draws over $N\in\{1,2,4,8,16,32,64\}$. Mean absolute error is $0.00276$ and maximum error is $0.00779$, consistent with simulation noise. Figure~\ref{fig:law} plots exact and Monte Carlo curves.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.78\linewidth]{figures/figure5_exact_law_validation.png}
+\caption{The finite tie-aware law predicts the selected real-utility curve for the fixed empirical token-future pool. The residual is Monte Carlo estimation error, not an asymptotic approximation gap.}
+\label{fig:law}
+\end{figure}
+
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Discrete and tokenized representations.}
+Vector-quantized autoencoders introduced learned discrete latent codebooks for neural representation learning \citep{oord2017neural}. Later work used discrete latents for high-fidelity image and video generation \citep{razavi2019generating,esser2021taming}. Our focus is not generation quality; it is the planning consequence of selecting from token-future score tails when a codebook cell hides physically relevant distinctions.
+
+\paragraph{World models and model-based planning.}
+World models learn predictive latent dynamics for decision making \citep{ha2018world,hafner2019learning,hafner2020dream}. Model-based RL and MPC systems use learned dynamics to plan by sampling or optimizing candidate futures \citep{chua2018deep,nagabandi2018neural,williams2017information}. We study a narrow inference-time selection law inside such systems: the generator can be held fixed while the selected score tail changes with $N$.
+
+\paragraph{Reranking, verifiers, and \bon{} selection.}
+Sampling many candidates and selecting with a verifier, reward model, or critic is common in sequence generation and decision systems \citep{cobbe2021training,nakano2021webgpt,stiennon2020learning}. The same pattern appears in planning as trajectory sampling plus scoring. Our contribution is to make the selected real-utility curve finite and auditable for tokenized world futures, especially under score-utility aliasing.
+
+\paragraph{Calibration and safety filtering.}
+Calibration methods relate model scores to empirical outcomes \citep{zadrozny2002transforming,guo2017calibration}. Selective prediction and safety filters abstain or constrain decisions when confidence or validity checks fail \citep{geifman2017selective,wabersich2021predictive}. Our deployment gate is in this spirit, but specialized to token-future diagnostics: alias rate, decode consistency, physical validity, repair gain, and pilot token-to-real labels.
+
+\section{Limitations and Claim Discipline}
+\label{sec:limits}
+
+The experiments are synthetic and controlled. The tokenizer, hidden mode, candidate generator, and validity penalties are designed to expose the mechanism. This is useful for diagnosis, but it is not an external benchmark result and not hardware deployment evidence. The learned VQ artifact is small, and the candidate pools are generated from a controlled mixture rather than a large-scale embodied world model.
+
+The repairs are conditional. Codebook uncertainty helps only when aliasing is reflected in codebook statistics. Decode consistency helps only when invalid decoded futures are detectable. Physical filtering requires a meaningful validity check. Pilot calibration requires representative real-utility labels and can drift if the deployment distribution changes. The deployment gate therefore returns \texttt{collect\_pilot\_labels} in the main run rather than declaring raw high-$N$ selection safe.
+
+The finite law is exact for a fixed empirical pool and iid sampling with uniform tie breaking. It does not by itself solve distribution shift, adaptive candidate generation, correlated rollouts, or misspecified real utility. Those cases require fresh audited pools or stronger assumptions.
+
+\section{Conclusion}
+
+\bon{} planning over world tokens is a tail-selection problem. Increasing $N$ reliably searches the upper tail of the token score, but whether that improves real utility depends on whether the score tail is physically meaningful. In our controlled tokenized/VQ setting, raw high-$N$ selection amplifies \twma{}: token likelihood rises, real utility falls, and selected futures become aliased and physically invalid. The exact finite law predicts this curve, and token-specific diagnostics plus pilot calibration repair the detectable case while leaving an honest oracle gap. The practical message is simple: before increasing $N$ for tokenized world-model planning, audit the token-score tail against real utility or use a gate that asks for pilot labels, repair, or abstention.
+
+\section*{Reproducibility Statement}
+The repository includes source code, tests, generated CSV/JSON artifacts, figures, and this LaTeX source. The main reproduction commands are \texttt{bash scripts/run\_all.sh}, \texttt{bash scripts/run\_claim\_audit.sh}, \texttt{pytest}, and \texttt{powershell -ExecutionPolicy Bypass -File paper/iclr/build.ps1}. Appendix~\ref{app:commands} maps the paper build and audit commands.
+
+\section*{Ethics and Impact Statement}
+This work uses synthetic CPU-local experiments and does not use human subjects, private data, deployed robots, or safety-critical hardware trials. The main risk is over-interpreting controlled diagnostic evidence as deployment certification. The paper explicitly limits the claim and recommends task-specific audits before using high-$N$ selection in new systems.
+
+\section*{LLM Usage Statement}
+Large language models were used for drafting and packaging assistance. The authors are responsible for the claims, code, citations, and final text. Numerical claims are taken from tracked repository artifacts.
+
+\phantomsection\label{maintextend}
+\bibliography{references}
+\bibliographystyle{iclr2026_conference}
+
+\appendix
+\input{appendix}
+
+\end{document}

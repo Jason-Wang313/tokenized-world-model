@@ -29,6 +29,8 @@ pytest
 
 ## Main Artifacts
 
+- `paper/iclr/main.pdf`: ICLR-style paper draft.
+- `paper/iclr/main.tex`: LaTeX source for the paper draft.
 - `docs/theory.md`: formal setup and exact finite law.
 - `results/metrics_main.csv`: raw and repaired Best-of-N curves.
 - `results/codebook_bottleneck.csv`: codebook-size stress sweep.
@@ -45,4 +47,3 @@ pytest
 ## Scope
 
 This is a controlled paper package for tokenized/VQ world-model planning. It is distinct from imagined-vs-real dynamics mismatch in WAM-style studies: here the scientific object is the discrete codebook/token bottleneck, token likelihood, decode consistency, and token-to-real aliasing. The repair claims are limited to settings where aliasing is measurable by token-specific diagnostics or a small pilot calibration set.
-
