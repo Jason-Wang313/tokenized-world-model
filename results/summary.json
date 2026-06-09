@@ -1,0 +1,14 @@
+{
+  "alias_rate_at_high_n": 1.0,
+  "exact_law_mae": 0.002758403610848895,
+  "gate_action": "collect_pilot_labels",
+  "gate_reason": "pilot calibration repairs a harmful high-N tail",
+  "mode": "full",
+  "n_pools": 150,
+  "pool_size": 64,
+  "raw_real_delta_high_vs_n1": -0.33748536013454317,
+  "repair_gain_at_high_n": 0.573822008766354,
+  "upper_tail_rank_correlation_combined": -0.08496864080638042,
+  "upper_tail_rank_correlation_raw": -0.0013571984475907245,
+  "violation_rate_at_high_n": 1.0
+}

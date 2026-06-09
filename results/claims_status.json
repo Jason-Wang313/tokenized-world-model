@@ -1,0 +1,59 @@
+{
+  "claims": [
+    {
+      "claim": "Best-of-N can amplify token-likelihood physical aliasing in a controlled tokenized/VQ world model.",
+      "evidence": [
+        "results/metrics_main.csv",
+        "figures/figure1_token_likelihood_physical_aliasing.png"
+      ],
+      "status": "supported_controlled"
+    },
+    {
+      "claim": "Token-specific diagnostics detect selected high-N aliasing and physical-validity failures.",
+      "evidence": [
+        "results/tail_autopsy.csv",
+        "figures/figure4_decode_validity_diagnostics.png",
+        "figures/figure6_alias_atlas.png"
+      ],
+      "status": "supported_controlled"
+    },
+    {
+      "claim": "Codebook-aware repair and small token-to-real calibration improve the selected tail in the controlled setting.",
+      "evidence": [
+        "results/metrics_main.csv",
+        "figures/figure2_repair_comparison.png"
+      ],
+      "status": "supported_controlled"
+    },
+    {
+      "claim": "Exact finite Best-of-N law predicts expected selected utility for fixed finite token-future pools.",
+      "evidence": [
+        "results/exact_law_validation.json",
+        "figures/figure5_exact_law_validation.png"
+      ],
+      "status": "supported_exact"
+    },
+    {
+      "claim": "External benchmark or real-robot validity.",
+      "evidence": [
+        "docs/final_audit.md",
+        "paper/limitations.md"
+      ],
+      "status": "not_claimed"
+    }
+  ],
+  "summary": {
+    "alias_rate_at_high_n": 1.0,
+    "exact_law_mae": 0.002758403610848895,
+    "gate_action": "collect_pilot_labels",
+    "gate_reason": "pilot calibration repairs a harmful high-N tail",
+    "mode": "full",
+    "n_pools": 150,
+    "pool_size": 64,
+    "raw_real_delta_high_vs_n1": -0.33748536013454317,
+    "repair_gain_at_high_n": 0.573822008766354,
+    "upper_tail_rank_correlation_combined": -0.08496864080638042,
+    "upper_tail_rank_correlation_raw": -0.0013571984475907245,
+    "violation_rate_at_high_n": 1.0
+  }
+}

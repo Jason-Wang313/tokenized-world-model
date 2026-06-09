@@ -1,0 +1,16 @@
+[project]
+name = "tokenized-world-best-of-n"
+version = "0.1.0"
+description = "Controlled Best-of-N inference laws for tokenized world models."
+requires-python = ">=3.10"
+dependencies = [
+  "numpy",
+  "matplotlib",
+  "pytest",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
+

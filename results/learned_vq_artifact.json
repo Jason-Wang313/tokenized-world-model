@@ -1,0 +1,7 @@
+{
+  "codebook_size": 8,
+  "collision_rate": 0.23166666666666666,
+  "quantization_error_mean": 0.11982611269682844,
+  "token_entropy": 2.94565252069392,
+  "transition_self_probability": 0.13659806878288758
+}
