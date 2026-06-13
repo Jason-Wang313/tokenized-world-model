@@ -2,10 +2,10 @@
 
 ## Supported In This Repo
 
-- In the controlled tokenized/VQ setting, raw Best-of-N selection can improve selected token likelihood while reducing selected real utility.
+- In the controlled tokenized/VQ setting, raw score-tail selection can improve selected token likelihood while reducing selected real utility.
 - Codebook collision, alias probability, quantization error, decode-consistency error, and physical-validity diagnostics identify the bad selected tail.
 - Token-specific repair scores and a small pilot token-to-real calibrator improve high-N selected utility in the controlled experiments.
-- The finite tie-aware Best-of-N law exactly predicts expected selected utility for fixed empirical token-future pools.
+- The finite tie-aware score-tail law exactly predicts expected selected utility for fixed empirical token-future pools.
 
 ## Not Claimed
 

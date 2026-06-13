@@ -2,7 +2,7 @@
 
 Verdict: paper-worthy v1.
 
-This is paper-worthy v1 as a controlled diagnosis-and-repair package for tokenized/VQ world-model Best-of-N selection. The evidence supports a narrow claim: in the synthetic tokenized setting here, raw high-N selection improves token/internal plausibility while selecting more alias-heavy and physically invalid futures, and token-specific repair recovers much of the selected-tail utility.
+This is paper-worthy v1 as a controlled diagnosis-and-repair package for tokenized/VQ world-model score-tail selection. The evidence supports a narrow claim: in the synthetic tokenized setting here, raw high-N selection improves token/internal plausibility while selecting more alias-heavy and physically invalid futures, and token-specific repair recovers much of the selected-tail utility.
 
 Key artifact checks:
 

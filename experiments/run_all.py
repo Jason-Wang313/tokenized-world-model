@@ -1,4 +1,4 @@
-from tokenized_world_best_of_n.pipeline import main
+from token_alias_tail_audit.pipeline import main
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 # Theory
 
-The theoretical object is a finite candidate pool of token futures with internal score `S` and real utility `R`. For each `N`, Best-of-N samples `N` iid candidates and selects the maximum-score future with uniform random tie breaking.
+The theoretical object is a finite candidate pool of token futures with internal score `S` and real utility `R`. For each `N`, score-tail samples `N` iid candidates and selects the maximum-score future with uniform random tie breaking.
 
 The expected selected utility is
 

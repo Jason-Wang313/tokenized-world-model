@@ -1,6 +1,6 @@
-# When World Tokens Lie
+# Token Likelihood Can Lie
 
-Best-of-N inference laws for tokenized world models.
+Physical-aliasing audits for tokenized world-model planning.
 
 This repository studies a narrow controlled question: when a world model compresses continuous states or observations into discrete world tokens, what happens when planning selects the highest-scoring future from a larger test-time candidate pool?
 
@@ -19,7 +19,7 @@ pytest
 
 ## What Is Included
 
-- Exact finite tie-aware Best-of-N law for scored token-future pools.
+- Exact finite tie-aware top-score selection law for scored token-future pools.
 - Controlled token aliasing toy where physically distinct states collapse into the same token.
 - Semi-learned VQ/tokenized world model with a learned codebook and transition statistics.
 - Codebook bottleneck stress test over codebook size, rare modes, and quantization error.
@@ -32,7 +32,7 @@ pytest
 - `paper/iclr/main.pdf`: ICLR-style paper draft.
 - `paper/iclr/main.tex`: LaTeX source for the paper draft.
 - `docs/theory.md`: formal setup and exact finite law.
-- `results/metrics_main.csv`: raw and repaired Best-of-N curves.
+- `results/metrics_main.csv`: raw and repaired score-tail curves.
 - `results/codebook_bottleneck.csv`: codebook-size stress sweep.
 - `results/exact_law_validation.json`: Monte Carlo validation of the exact law.
 - `results/learned_vq_artifact.json`: learned/semi-learned tokenized model artifact.

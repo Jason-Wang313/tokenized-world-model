@@ -1,7 +1,7 @@
 [project]
-name = "tokenized-world-best-of-n"
+name = "token-alias-tail-audit"
 version = "0.1.0"
-description = "Controlled Best-of-N inference laws for tokenized world models."
+description = "Controlled token-alias tail audits for tokenized world models."
 requires-python = ">=3.10"
 dependencies = [
   "numpy",
@@ -13,4 +13,3 @@ dependencies = [
 pythonpath = ["src"]
 testpaths = ["tests"]
 addopts = "-q"
-

@@ -38,5 +38,5 @@ else
   PROJECT_SRC="$(to_windows_path "${PROJECT_ROOT}/src")"
   PYTHONPATH_SEP=";"
 fi
-"${PYTHON_BIN}" -c "import runpy, sys; sys.path.insert(0, r'${PROJECT_SRC}'); runpy.run_module('tokenized_world_best_of_n.pipeline', run_name='__main__')" --mode smoke
-"${PYTHON_BIN}" -c "import runpy, sys; sys.path.insert(0, r'${PROJECT_SRC}'); runpy.run_module('tokenized_world_best_of_n.audit', run_name='__main__')"
+"${PYTHON_BIN}" -c "import runpy, sys; sys.path.insert(0, r'${PROJECT_SRC}'); runpy.run_module('token_alias_tail_audit.pipeline', run_name='__main__')" --mode smoke
+"${PYTHON_BIN}" -c "import runpy, sys; sys.path.insert(0, r'${PROJECT_SRC}'); runpy.run_module('token_alias_tail_audit.audit', run_name='__main__')"

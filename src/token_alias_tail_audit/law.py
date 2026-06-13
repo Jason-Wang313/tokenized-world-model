@@ -1,4 +1,4 @@
-"""Exact finite Best-of-N laws for scored finite pools."""
+"""Exact finite score-tail laws for scored finite pools."""
 
 from __future__ import annotations
 
@@ -50,7 +50,7 @@ def tie_aware_expected_utility(scores: Iterable[float], utilities: Iterable[floa
     return float(expected)
 
 
-def best_of_n_curve(
+def score_tail_curve(
     scores: Iterable[float], utilities: Iterable[float], ns: Iterable[int]
 ) -> list[LawPoint]:
     return [LawPoint(int(n), tie_aware_expected_utility(scores, utilities, int(n))) for n in ns]

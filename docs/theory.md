@@ -10,7 +10,7 @@ c_{t+1:t+H} ~ p(c_{t+1:t+H} | c_t, a, goal).
 
 Each generated token future is decoded into a future observation or state estimate. A planner scores the candidate with an internal score `S`: token likelihood, token plausibility, decoded reward, token critic value, or a mixture. Real utility `R` is measured separately after decoding or executing the implied future in the real evaluation environment.
 
-Best-of-N selection draws candidates `Y_1, ..., Y_N` from the token generator and returns
+score-tail selection draws candidates `Y_1, ..., Y_N` from the token generator and returns
 
 ```text
 Y* = argmax_i S(Y_i),
@@ -40,7 +40,7 @@ This is tie-aware because a selected maximum score group contributes the average
 
 ## Oracle And Anti-Aligned Examples
 
-An oracle scorer ranks candidates by `R`, so Best-of-N stresses genuinely useful futures. An anti-aligned token scorer ranks alias-heavy futures above physically valid futures; larger `N` then increases the probability that the selected candidate comes from the bad high-score token tail.
+An oracle scorer ranks candidates by `R`, so score-tail stresses genuinely useful futures. An anti-aligned token scorer ranks alias-heavy futures above physically valid futures; larger `N` then increases the probability that the selected candidate comes from the bad high-score token tail.
 
 The experiments instantiate this with token futures whose likelihood is high because they follow common codebook transitions, while their hidden physical mode, decoded contact state, or collision condition is wrong.
 
@@ -48,9 +48,9 @@ The experiments instantiate this with token futures whose likelihood is high bec
 
 The law is not a training guarantee. It is a conditional inference law: once the generator, tokenizer, scorer, and candidate distribution are fixed, the expected selected real utility curve is determined by the joint empirical distribution of `(S, R)`.
 
-The same law applies to raw token likelihood, decoded reward, repaired scores, and oracle real utility. The repo uses this to separate a scorer failure from the mechanics of Best-of-N selection.
+The same law applies to raw token likelihood, decoded reward, repaired scores, and oracle real utility. The repo uses this to separate a scorer failure from the mechanics of score-tail selection.
 
 ## Monte Carlo Validation
 
-The script `bash scripts/run_all.sh` computes the exact law on a held finite pool and compares it with Monte Carlo repeated Best-of-N draws. The audit records mean absolute error in `results/exact_law_validation.json`.
+The script `bash scripts/run_all.sh` computes the exact law on a held finite pool and compares it with Monte Carlo repeated score-tail draws. The audit records mean absolute error in `results/exact_law_validation.json`.
 

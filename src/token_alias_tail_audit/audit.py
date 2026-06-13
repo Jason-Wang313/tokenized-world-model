@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 FORBIDDEN_PHRASES = [
     "we solve tokenized world modeling",
     "we solve world-token planning",
-    "best-of-n always hurts",
+    "score-tail always hurts",
     "token models are bad",
     "codebook uncertainty always fixes it",
     "real-robot validation",

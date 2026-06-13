@@ -1,7 +1,7 @@
 import numpy as np
 
-from tokenized_world_best_of_n.law import (
-    best_of_n_curve,
+from token_alias_tail_audit.law import (
+    score_tail_curve,
     monte_carlo_expected_utility,
     tie_aware_expected_utility,
 )
@@ -26,6 +26,6 @@ def test_monte_carlo_validates_exact_law():
 
 
 def test_curve_preserves_requested_ns():
-    curve = best_of_n_curve([0.0, 1.0], [0.0, 1.0], [1, 4, 16])
+    curve = score_tail_curve([0.0, 1.0], [0.0, 1.0], [1, 4, 16])
     assert [point.n for point in curve] == [1, 4, 16]
 

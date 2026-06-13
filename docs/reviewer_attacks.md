@@ -12,9 +12,9 @@ Response: Yes. That is the point of the controlled v1: when token aliasing is de
 
 Response: The result is intentionally synthetic and finite-law-backed. The contribution is a clean diagnosis, a measurable failure mechanism, and an audit protocol. Benchmark validation is a next step, not a hidden claim.
 
-## Attack: Best-of-N is being blamed for a bad scorer.
+## Attack: score-tail is being blamed for a bad scorer.
 
-Response: The exact law separates the selection mechanism from scorer quality. Best-of-N amplifies whatever lies in the high-score tail. The failure is a token scorer/codebook alignment problem exposed by high-N selection.
+Response: The exact law separates the selection mechanism from scorer quality. score-tail amplifies whatever lies in the high-score tail. The failure is a token scorer/codebook alignment problem exposed by high-N selection.
 
 ## Attack: Tokenization is not always harmful.
 

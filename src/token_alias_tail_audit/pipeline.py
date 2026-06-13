@@ -67,7 +67,7 @@ def _tail_autopsy(table: dict[str, np.ndarray], selected: dict[str, np.ndarray])
 def _claims_status(summary: dict[str, object]) -> list[dict[str, object]]:
     return [
         {
-            "claim": "Best-of-N can amplify token-likelihood physical aliasing in a controlled tokenized/VQ world model.",
+            "claim": "score-tail can amplify token-likelihood physical aliasing in a controlled tokenized/VQ world model.",
             "status": "supported_controlled",
             "evidence": [
                 "results/metrics_main.csv",
@@ -92,7 +92,7 @@ def _claims_status(summary: dict[str, object]) -> list[dict[str, object]]:
             ],
         },
         {
-            "claim": "Exact finite Best-of-N law predicts expected selected utility for fixed finite token-future pools.",
+            "claim": "Exact finite score-tail law predicts expected selected utility for fixed finite token-future pools.",
             "status": "supported_exact",
             "evidence": ["results/exact_law_validation.json", "figures/figure5_exact_law_validation.png"],
         },
@@ -127,7 +127,7 @@ def _write_final_audit(path: Path, summary: dict[str, object]) -> None:
 
 Verdict: {verdict}.
 
-This is paper-worthy v1 as a controlled diagnosis-and-repair package for tokenized/VQ world-model Best-of-N selection. The evidence supports a narrow claim: in the synthetic tokenized setting here, raw high-N selection improves token/internal plausibility while selecting more alias-heavy and physically invalid futures, and token-specific repair recovers much of the selected-tail utility.
+This is paper-worthy v1 as a controlled diagnosis-and-repair package for tokenized/VQ world-model score-tail selection. The evidence supports a narrow claim: in the synthetic tokenized setting here, raw high-N selection improves token/internal plausibility while selecting more alias-heavy and physically invalid futures, and token-specific repair recovers much of the selected-tail utility.
 
 Key artifact checks:
 

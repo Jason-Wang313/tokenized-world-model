@@ -4,7 +4,7 @@ Deployment gate: `collect_pilot_labels`.
 Exact-law MAE: `0.00276`.
 
 ## supported_controlled
-Best-of-N can amplify token-likelihood physical aliasing in a controlled tokenized/VQ world model.
+score-tail can amplify token-likelihood physical aliasing in a controlled tokenized/VQ world model.
 
 Evidence: `results/metrics_main.csv`, `figures/figure1_token_likelihood_physical_aliasing.png`
 
@@ -19,7 +19,7 @@ Codebook-aware repair and small token-to-real calibration improve the selected t
 Evidence: `results/metrics_main.csv`, `figures/figure2_repair_comparison.png`
 
 ## supported_exact
-Exact finite Best-of-N law predicts expected selected utility for fixed finite token-future pools.
+Exact finite score-tail law predicts expected selected utility for fixed finite token-future pools.
 
 Evidence: `results/exact_law_validation.json`, `figures/figure5_exact_law_validation.png`
 

@@ -1,10 +1,10 @@
 from pathlib import Path
 
-from tokenized_world_best_of_n.audit import ALLOWED_VERDICTS, FORBIDDEN_PHRASES
+from token_alias_tail_audit.audit import ALLOWED_VERDICTS, FORBIDDEN_PHRASES
 
 
 def test_forbidden_claims_are_specific_strings():
-    assert "best-of-n always hurts" in FORBIDDEN_PHRASES
+    assert "score-tail always hurts" in FORBIDDEN_PHRASES
     assert "token models are bad" in FORBIDDEN_PHRASES
 
 

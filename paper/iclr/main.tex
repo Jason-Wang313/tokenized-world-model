@@ -11,12 +11,11 @@
 \usepackage{hyperref}
 \usepackage{url}
 
-\title{When World Tokens Lie:\\Best-of-$N$ Inference Laws for Tokenized World Models}
+\title{Token Likelihood Can Lie:\\Auditing Physical Aliasing in Tokenized World-Model Planning}
 
 % Leave \iclrfinalcopy commented for anonymous review submissions.
 \author{Anonymous Authors\\Paper under double-blind review}
 
-\newcommand{\bon}{Best-of-$N$}
 \newcommand{\twma}{token-likelihood physical aliasing}
 \newcommand{\real}{\mathrm{real}}
 \newcommand{\tok}{\mathrm{tok}}
@@ -27,7 +26,7 @@
 \maketitle
 
 \begin{abstract}
-Tokenized world models compress continuous observations or states into discrete codebook tokens and predict future token sequences. This paper studies a test-time selection question: what happens when a planner samples $N$ token futures and executes the one with the highest internal token score? We show, in controlled tokenized/VQ settings, that larger $N$ can improve selected token likelihood while worsening real decoded utility when the codebook aliases physically distinct futures. We call this \twma{}. We give an exact finite, tie-aware \bon{} law for the selected real-utility curve and validate it by Monte Carlo with mean absolute error $0.00276$. In the main controlled run, raw selection at $N=64$ raises selected token likelihood to $1.386$ while real utility falls to $0.0556$ and alias/physical-violation rates reach $1.0$. A combined token-specific repair raises real utility to $0.629$ and drops both rates to $0.0$, while an oracle reaches $0.957$, leaving a clear gap. The results are diagnostic rather than universal: they do not establish external benchmark performance, hardware deployment evidence, or a general indictment of tokenized world models.
+Tokenized world models compress continuous observations or states into discrete codebook tokens and predict future token sequences. We audit a selection-time failure: a planner samples $N$ token futures and executes the one with the highest internal token score. In controlled tokenized/VQ settings, larger $N$ improves selected token likelihood while worsening real decoded utility when the codebook aliases physically distinct futures. We call this \twma{}. We give an exact finite, tie-aware law for the selected real-utility curve under top-score sampling and validate it by Monte Carlo with mean absolute error $0.00276$. In the main controlled run, raw selection at $N=64$ raises selected token likelihood to $1.386$ while real utility falls to $0.0556$ and alias/physical-violation rates reach $1.0$. A combined token-specific repair raises real utility to $0.629$ and drops both rates to $0.0$, while an oracle reaches $0.957$, leaving a clear gap. The results are diagnostic rather than universal: they do not establish external benchmark performance, hardware deployment evidence, or a general indictment of tokenized world models.
 \end{abstract}
 
 \section{Introduction}
@@ -36,19 +35,19 @@ Discrete world tokens are appealing because they turn continuous, high-dimension
 
 The same bottleneck creates a planning-specific risk. A token future can be likely under the token model while representing several physically different decoded futures. If the internal score sees only the token sequence, decoded reward, or a token critic, it can assign high score to a future whose real execution is low value because hidden modes, physical validity, or decoder consistency were collapsed by the codebook. We study this as \emph{\twma{}}.
 
-\bon{} selection stresses the issue. A planner samples $N$ candidate futures and selects the highest-scoring one. Increasing $N$ concentrates selection on the upper tail of the score distribution. When the score tail is aligned with real utility, this is useful. When the score tail is physically aliased, larger $N$ can select invalid decoded futures more reliably. The failure is therefore not ``more samples are bad''; it is ``more samples search harder through whatever score tail the token model exposes.''
+Score-tail selection stresses the issue. A planner samples $N$ candidate futures and selects the highest-scoring one. Increasing $N$ concentrates selection on the upper tail of the score distribution. When the score tail is aligned with real utility, this is useful. When the score tail is physically aliased, larger $N$ can select invalid decoded futures more reliably. The failure is therefore not ``more samples are bad''; it is ``more samples search harder through whatever score tail the token model exposes.''
 
 This paper is a diagnosis-and-repair package for that mechanism. The contribution is deliberately scoped:
 
 \begin{enumerate}
-\item We formalize finite token-future selection and give an exact tie-aware \bon{} law for the expected selected real utility of any fixed empirical candidate pool.
+\item We formalize finite token-future selection and give an exact tie-aware top-score law for the expected selected real utility of any fixed empirical candidate pool.
 \item We identify \twma{} as a concrete failure mode in which token likelihood rises while decoded/executed utility falls.
 \item We provide controlled VQ/tokenized evidence, including learned codebook artifacts, codebook-size sweeps, decode-validity diagnostics, and exact-law validation.
 \item We test token-specific repairs: codebook uncertainty, alias detection, decode-consistency penalties, physical-validity filtering, rare-mode reweighting, and a small token-to-real pilot calibrator.
 \item We package the evidence with an audit discipline that limits claims to controlled settings where aliasing is measurable or pilot labels are collected.
 \end{enumerate}
 
-Our claim is not that tokenized world models are broadly flawed, nor that \bon{} is broadly unsafe. The claim is narrower and testable: if the selected score aliases physical utility, high-$N$ selection can amplify the aliasing tail; token-specific diagnostics and pilot calibration can repair this in controlled detectable cases.
+Our claim is not that tokenized world models are broadly flawed, nor that score-tail selection is broadly unsafe. The claim is narrower and testable: if the selected score aliases physical utility, high-$N$ selection can amplify the aliasing tail; token-specific diagnostics and pilot calibration can repair this in controlled detectable cases.
 
 \section{Setup}
 \label{sec:setup}
@@ -64,7 +63,7 @@ For each candidate future $c_i$, we distinguish three quantities:
 
 The separation between $S_i$ and $R_i$ is essential. In the controlled environment used here, the tokenizer is trained on observable coordinates while a hidden physical mode influences real utility. This makes it possible for multiple physical futures to share token cells or near-identical token scores while differing in validity and utility. We call a candidate \emph{aliased} when its token representation hides a physically important distinction that affects $R_i$ but is weakly represented in $S_i$.
 
-\bon{} selection draws $N$ candidates independently from a finite empirical pool and returns an index with maximal score, breaking score ties uniformly. The selected real utility is $R^{\mathrm{sel}}_N$. We study the curve
+Score-tail selection draws $N$ candidates independently from a finite empirical pool and returns an index with maximal score, breaking score ties uniformly. The selected real utility is $R^{\mathrm{sel}}_N$. We study the curve
 \[
 N \mapsto \mathbb{E}[R^{\mathrm{sel}}_N],
 \]
@@ -75,7 +74,7 @@ and compare it for raw token scores, repaired scores, and an oracle real-utility
 
 The central law is finite-population, tie-aware, and score-agnostic. It applies to token likelihood, a repaired diagnostic score, an oracle score, or any other scalar selector.
 
-\begin{theorem}[Tie-aware finite \bon{} law]
+\begin{theorem}[Tie-aware finite score-tail law]
 Consider a finite candidate pool $\{(S_i,R_i)\}_{i=1}^m$. Partition the candidates into score-tie groups $g$ sorted by increasing score. Let $L_g$ be the number of candidates with score strictly lower than group $g$, let $U_g$ be the number of candidates with score no higher than group $g$, and let $\bar R_g$ be the mean real utility within group $g$. If $N$ candidates are sampled iid uniformly from the pool and the highest-score tie group is broken uniformly, then
 \begin{equation}
 \mathbb{E}[R^{\mathrm{sel}}_N]
@@ -141,7 +140,7 @@ The main metrics are in \path{results/metrics_main.csv}; tail autopsy rows are i
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.82\linewidth]{figures/figure1_token_likelihood_physical_aliasing.png}
-\caption{Raw \bon{} selection amplifies token-likelihood physical aliasing. As $N$ grows, selected token likelihood rises, but selected real utility falls because the high-score tail is dominated by aliased and physically invalid decoded futures.}
+\caption{Raw score-tail selection amplifies token-likelihood physical aliasing. As $N$ grows, selected token likelihood rises, but selected real utility falls because the high-score tail is dominated by aliased and physically invalid decoded futures.}
 \label{fig:failure}
 \end{figure}
 
@@ -227,7 +226,7 @@ Vector-quantized autoencoders introduced learned discrete latent codebooks for n
 \paragraph{World models and model-based planning.}
 World models learn predictive latent dynamics for decision making \citep{ha2018world,hafner2019learning,hafner2020dream}. Model-based RL and MPC systems use learned dynamics to plan by sampling or optimizing candidate futures \citep{chua2018deep,nagabandi2018neural,williams2017information}. We study a narrow inference-time selection law inside such systems: the generator can be held fixed while the selected score tail changes with $N$.
 
-\paragraph{Reranking, verifiers, and \bon{} selection.}
+\paragraph{Reranking, verifiers, and score-tail selection.}
 Sampling many candidates and selecting with a verifier, reward model, or critic is common in sequence generation and decision systems \citep{cobbe2021training,nakano2021webgpt,stiennon2020learning}. The same pattern appears in planning as trajectory sampling plus scoring. Our contribution is to make the selected real-utility curve finite and auditable for tokenized world futures, especially under score-utility aliasing.
 
 \paragraph{Calibration and safety filtering.}
@@ -244,7 +243,7 @@ The finite law is exact for a fixed empirical pool and iid sampling with uniform
 
 \section{Conclusion}
 
-\bon{} planning over world tokens is a tail-selection problem. Increasing $N$ reliably searches the upper tail of the token score, but whether that improves real utility depends on whether the score tail is physically meaningful. In our controlled tokenized/VQ setting, raw high-$N$ selection amplifies \twma{}: token likelihood rises, real utility falls, and selected futures become aliased and physically invalid. The exact finite law predicts this curve, and token-specific diagnostics plus pilot calibration repair the detectable case while leaving an honest oracle gap. The practical message is simple: before increasing $N$ for tokenized world-model planning, audit the token-score tail against real utility or use a gate that asks for pilot labels, repair, or abstention.
+score-tail planning over world tokens is a tail-selection problem. Increasing $N$ reliably searches the upper tail of the token score, but whether that improves real utility depends on whether the score tail is physically meaningful. In our controlled tokenized/VQ setting, raw high-$N$ selection amplifies \twma{}: token likelihood rises, real utility falls, and selected futures become aliased and physically invalid. The exact finite law predicts this curve, and token-specific diagnostics plus pilot calibration repair the detectable case while leaving an honest oracle gap. The practical message is simple: before increasing $N$ for tokenized world-model planning, audit the token-score tail against real utility or use a gate that asks for pilot labels, repair, or abstention.
 
 \section*{Reproducibility Statement}
 The repository includes source code, tests, generated CSV/JSON artifacts, figures, and this LaTeX source. The main reproduction commands are \texttt{bash scripts/run\_all.sh}, \texttt{bash scripts/run\_claim\_audit.sh}, \texttt{pytest}, and \texttt{powershell -ExecutionPolicy Bypass -File paper/iclr/build.ps1}. Appendix~\ref{app:commands} maps the paper build and audit commands.

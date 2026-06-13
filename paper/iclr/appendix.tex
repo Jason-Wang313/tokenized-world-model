@@ -11,7 +11,7 @@ Conditional on this event, uniform tie breaking within the selected score group 
 \section{Experiment Details}
 \label{app:details}
 
-The controlled generator is implemented in \path{src/tokenized_world_best_of_n/simulation.py}. It first builds synthetic observations with an omitted hidden physical mode, fits a small VQ codebook, and estimates per-token frequency, alias probability, quantization error, and transition statistics. Candidate pools are then sampled from four candidate kinds:
+The controlled generator is implemented in \path{src/token_alias_tail_audit/simulation.py}. It first builds synthetic observations with an omitted hidden physical mode, fits a small VQ codebook, and estimates per-token frequency, alias probability, quantization error, and transition statistics. Candidate pools are then sampled from four candidate kinds:
 \begin{itemize}
 \item \texttt{alias}: high token likelihood and decoded reward, high physical violation, hidden-mode error, and low real utility;
 \item \texttt{rare\_good}: lower token likelihood, low physical violation, and high real utility;
@@ -97,7 +97,7 @@ Raw aliasing failure & \path{results/metrics_main.csv}; \path{figures/figure1_to
 Repair comparison & \path{results/metrics_main.csv}; \path{figures/figure2_repair_comparison.png} \\
 Codebook bottleneck & \path{results/codebook_bottleneck.csv}; \path{figures/figure3_codebook_bottleneck_curve.png} \\
 Decode diagnostics & \path{results/tail_autopsy.csv}; \path{figures/figure4_decode_validity_diagnostics.png}; \path{figures/figure6_alias_atlas.png} \\
-Exact finite law & \path{results/exact_law_validation.json}; \path{figures/figure5_exact_law_validation.png}; \path{src/tokenized_world_best_of_n/law.py} \\
+Exact finite law & \path{results/exact_law_validation.json}; \path{figures/figure5_exact_law_validation.png}; \path{src/token_alias_tail_audit/law.py} \\
 Claim audit & \path{results/claims_status.json}; \path{results/claims_status.md}; \path{docs/final_audit.md} \\
 \bottomrule
 \end{tabular}

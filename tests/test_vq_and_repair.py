@@ -1,8 +1,8 @@
 import numpy as np
 
-from tokenized_world_best_of_n.repair import ALLOWED_GATE_OUTPUTS, add_repair_scores, deployment_gate
-from tokenized_world_best_of_n.simulation import generate_candidate_table, train_tokenized_world_model
-from tokenized_world_best_of_n.vq import build_synthetic_observations, collision_rate
+from token_alias_tail_audit.repair import ALLOWED_GATE_OUTPUTS, add_repair_scores, deployment_gate
+from token_alias_tail_audit.simulation import generate_candidate_table, train_tokenized_world_model
+from token_alias_tail_audit.vq import build_synthetic_observations, collision_rate
 
 
 def test_learned_vq_has_measurable_hidden_aliasing():

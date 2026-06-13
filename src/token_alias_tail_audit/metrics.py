@@ -1,4 +1,4 @@
-"""Evaluation metrics for tokenized Best-of-N experiments."""
+"""Evaluation metrics for tokenized score-tail experiments."""
 
 from __future__ import annotations
 
