@@ -1,0 +1,9 @@
+claim_id,evidence_family,status,observed,source,paper_use
+T1,finite tie-aware token-tail law,supported_exact,"MAE 0.0028, max 0.0078",results/exact_law_validation.json,"audit equation, not architecture novelty"
+T2,raw token-likelihood physical aliasing,supported_controlled,token gain 0.548; real drop 0.337; alias 1.000; violation 1.000,results/metrics_main.csv,central controlled failure claim
+T3,tail autopsy,supported_controlled,raw tail real 0.045; combined tail real 0.631; raw violation 0.814,results/tail_autopsy.csv,mechanism evidence for alias-heavy selected futures
+T4,token-specific repair,supported_controlled,combined gain 0.574; combined utility 0.629; oracle gap 0.327,results/metrics_main.csv,"controlled repair evidence, not universal repair"
+T5,pilot token-to-real calibration,supported_controlled_with_labels,pilot gain 0.763; pilot utility 0.819; oracle gap 0.138,results/metrics_main.csv,label-spending repair evidence
+T6,codebook bottleneck sweep,supported_controlled,raw utility range 0.038-0.089; min repair gain 0.553,results/codebook_bottleneck.csv,"codebook-size stress, not external benchmark"
+T7,learned VQ artifact,supported_controlled,K=8; collision 0.232; quant error 0.120; entropy 2.946,results/learned_vq_artifact.json,"semi-learned token artifact, not SOTA performance"
+T8,deployment gate,supported_controlled,collect_pilot_labels: pilot calibration repairs a harmful high-N tail,results/summary.json,risk gate asks for pilot labels in harmful tails

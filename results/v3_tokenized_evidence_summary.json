@@ -1,0 +1,35 @@
+{
+  "generated_artifacts": [
+    "results/v3_tokenized_scorecard.csv",
+    "results/v3_tokenized_attack_ledger.csv",
+    "results/v3_tokenized_evidence_summary.json",
+    "results/v3_tokenized_evidence_summary.md",
+    "paper/iclr/v3_results_macros.tex",
+    "paper/iclr/v3_scorecard_table.tex",
+    "paper/iclr/v3_attack_ledger_table.tex",
+    "paper/iclr/v3_full_curves_table.tex",
+    "paper/iclr/v3_tail_autopsy_table.tex",
+    "paper/iclr/v3_codebook_sweep_table.tex",
+    "figures/figure7_v3_token_evidence_scorecard.png",
+    "figures/figure8_v3_repair_selector_panel.png",
+    "figures/figure9_v3_codebook_stress.png",
+    "figures/figure10_v3_tail_autopsy.png",
+    "figures/figure11_v3_vq_artifact.png",
+    "figures/figure12_v3_attack_coverage.png"
+  ],
+  "key_values": {
+    "combined_gain_high_n": 0.573822008766354,
+    "combined_oracle_gap": 0.32742496004620836,
+    "gate_action": "collect_pilot_labels",
+    "law_mae": 0.002758403610848895,
+    "pilot_gain_high_n": 0.7629610322684529,
+    "pilot_oracle_gap": 0.13828593654410948,
+    "raw_alias_high_n": 1.0,
+    "raw_real_drop": 0.33748536013454317,
+    "raw_token_gain": 0.5484218276723245,
+    "raw_violation_high_n": 1.0
+  },
+  "paper_identity": "token-likelihood physical aliasing in tokenized/VQ world-model planning",
+  "target_page_count_minimum": 25,
+  "uses_cached_artifacts_only": true
+}

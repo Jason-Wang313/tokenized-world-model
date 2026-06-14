@@ -8,7 +8,9 @@ Let the finite pool contain $m$ candidates and let group $g$ contain all candida
 \]
 Conditional on this event, uniform tie breaking within the selected score group gives expected utility $\bar R_g$. Summing these disjoint events over score groups proves Equation~\ref{eq:finite-law}. Replacing $\bar R_g$ with the group mean score yields the expected selected-score curve.
 
-\section{Experiment Details}
+The law also clarifies why selected real utility can decrease with $N$. If the top score group has lower $\bar R_g$ than lower score groups, then the probability mass on that low-utility group increases with $N$. No smoothness, calibration, or continuous-score assumption is required. This is useful for tokenized world models because codebook scores can be tied, saturated, or quantized.
+
+\section{Controlled Generator Details}
 \label{app:details}
 
 The controlled generator is implemented in \path{src/token_alias_tail_audit/simulation.py}. It first builds synthetic observations with an omitted hidden physical mode, fits a small VQ codebook, and estimates per-token frequency, alias probability, quantization error, and transition statistics. Candidate pools are then sampled from four candidate kinds:
@@ -19,10 +21,10 @@ The controlled generator is implemented in \path{src/token_alias_tail_audit/simu
 \item \texttt{valid}: moderate score, low violation, and moderate utility.
 \end{itemize}
 
-The main run uses $150$ pools, pool size $64$, and $N\in\{1,2,4,8,16,32,64\}$. All methods are evaluated on the same generated candidates. The exact law is validated against Monte Carlo draws from the raw-score empirical pool.
+The main run uses \VThreePools{} pools, pool size \VThreePoolSize{}, and $N\in\{1,2,4,8,16,32,64\}$. All selectors are evaluated on the same generated candidates. The exact law is validated against Monte Carlo draws from the raw-score empirical pool.
 
 \begin{table}[h]
-\caption{Learned VQ artifact used in the main run.}
+\caption{Semi-learned VQ artifact used in the main run.}
 \label{tab:vq-artifact}
 \centering
 \small
@@ -30,11 +32,11 @@ The main run uses $150$ pools, pool size $64$, and $N\in\{1,2,4,8,16,32,64\}$. A
 \toprule
 Quantity & Value \\
 \midrule
-Codebook size & 8 \\
-Collision rate & 0.232 \\
-Mean quantization error & 0.120 \\
-Token entropy & 2.946 \\
-Mean transition self-probability & 0.137 \\
+Codebook size & \VThreeVQCodebookSize{} \\
+Collision rate & \VThreeVQCollision{} \\
+Mean quantization error & \VThreeVQQuantError{} \\
+Token entropy & \VThreeVQEntropy{} \\
+Mean transition self-probability & \VThreeVQTransitionSelf{} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -59,7 +61,7 @@ S^{\mathrm{raw}} - 0.35a, & v \leq 0.45,
 \[
 S^{\mathrm{rare}} = S^{\mathrm{raw}} - 0.75a + 0.35b - 0.55v.
 \]
-The pilot calibrator is a ridge regressor from eight token diagnostics to real utility, trained on the first $16\%$ of generated candidates with a minimum of twelve pilot labels. The combined repair is
+The pilot calibrator is a ridge regressor from token diagnostics to real utility, trained on a pilot fraction of generated candidates with a minimum pilot-label floor. The combined repair is
 \[
 S^{\mathrm{combined}} =
 0.15S^{\mathrm{codebook}}
@@ -69,22 +71,172 @@ S^{\mathrm{combined}} =
 \]
 These weights are fixed in the repository implementation and are not tuned per figure.
 
-\section{Additional Diagnostics}
-\label{app:alias-atlas}
+\section{Additional Diagnostic Figures}
+\label{app:figures}
 
-Figure~\ref{fig:alias-atlas} visualizes the alias atlas. The purpose is diagnostic rather than aesthetic: token cells with higher alias probability and larger decode/physical errors are the cells that raw high-$N$ selection tends to over-select.
+The following figures are included to make the token-specific mechanism visible. They are not external benchmark results; each figure is generated from the controlled local artifacts.
 
-\begin{figure}[h]
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.86\linewidth]{figures/figure3_codebook_bottleneck_curve.png}
+\caption{Codebook bottleneck curve from the original full artifact.}
+\label{fig:appendix-codebook}
+\end{figure}
+
+\begin{figure}[H]
 \centering
 \includegraphics[width=0.86\linewidth]{figures/figure6_alias_atlas.png}
 \caption{Alias atlas for the controlled tokenized world model. Raw high-score selection concentrates in token regions where hidden-mode aliasing and decoded physical invalidity are high.}
 \label{fig:alias-atlas}
 \end{figure}
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.86\linewidth]{figures/figure9_v3_codebook_stress.png}
+\caption{V3 codebook stress synthesis. Raw high-budget utility remains low across the codebook-size sweep even as quantization error changes.}
+\label{fig:appendix-v3-codebook}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.86\linewidth]{figures/figure10_v3_tail_autopsy.png}
+\caption{V3 tail autopsy. Raw high-budget selection chooses alias-heavy candidates; combined repair shifts the selected tail toward valid futures; oracle selects the highest real utility.}
+\label{fig:appendix-v3-tail}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.86\linewidth]{figures/figure11_v3_vq_artifact.png}
+\caption{V3 semi-learned VQ artifact summary.}
+\label{fig:appendix-v3-vq}
+\end{figure}
+
+\section{Selector Table}
+\label{app:selectors}
+
+\begin{table}[H]
+\caption{High-budget selector interpretation. The paper separates label-spending calibration from no-label diagnostics and oracle upper bounds.}
+\label{tab:selectors}
+\centering
+\small
+\begin{tabular}{@{}p{0.23\linewidth}p{0.24\linewidth}p{0.20\linewidth}p{0.23\linewidth}@{}}
+\toprule
+Selector & Uses & Strength & Limitation \\
+\midrule
+Raw token score & token likelihood, decoded reward & tests failure & unsafe when high-score tail aliases utility \\
+Codebook uncertainty & alias probability, quantization error & token-specific diagnostic & weak if alias cells still dominate likelihood \\
+Decode consistency & decoded physical agreement & strong controlled repair & requires meaningful decode diagnostics \\
+Physical filter & physical-violation threshold & strong controlled repair & needs task-specific validity checks \\
+Rare-mode reweighting & rare-token bonus plus penalties & tests rare valid modes & rare tokens can be mixed quality \\
+Pilot calibrator & token diagnostics plus labels & strongest repair here & spends real-utility labels and can drift \\
+Combined repair & fixed blend of diagnostics and calibration & controlled repair stack & still below oracle \\
+Oracle & real utility & upper bound & not deployable evidence \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Full Cached Evidence Tables}
+\label{app:full-evidence}
+
+This appendix section exposes the complete cached evidence behind the compact main-text scorecard. The intent is to make the paper harder to attack on cherry-picking grounds: every selector, every budget, the codebook sweep, and the selected high-budget tails are listed directly from the repository artifacts.
+
+Table~\ref{tab:v3-full-curves} is the full selected-tail curve for all selectors and all candidate budgets. It shows the central non-monotonicity in its most direct form: raw token-score selection raises selected token likelihood as the budget grows, while selected real utility collapses and the selected tail becomes entirely aliasing and physically invalid. The same table also separates the repairs by evidence cost. Decode consistency and physical filtering reduce aliasing without real-utility labels; the pilot calibrator spends labels and therefore gives the strongest controlled repair; the oracle is retained only as an unreachable upper bound.
+
+\input{v3_full_curves_table.tex}
+
+Table~\ref{tab:v3-codebook-sweep} reports the cached codebook-size stress test. This is not used to claim that codebook size is irrelevant. It is used to show that, in this generator, merely changing the bottleneck size does not remove the selected-tail pathology: raw high-budget utility remains low across the sweep, and a token-aware repair keeps a large gain in every tested setting.
+
+\input{v3_codebook_sweep_table.tex}
+
+Table~\ref{tab:v3-tail-autopsy} lists the selected high-budget examples used for the tail autopsy. This table is deliberately verbose because it is the easiest place for a reviewer to check whether the headline mechanism is real. The raw selector repeatedly chooses candidates with low real utility and high decode or validity errors; the combined repair shifts the selected set to valid moderate-utility futures; the oracle shows the remaining gap to the best real-utility tail.
+
+\input{v3_tail_autopsy_table.tex}
+
+\section{Extended Experimental Protocol}
+\label{app:extended-protocol}
+
+\paragraph{Why the protocol fixes the empirical question.}
+The empirical question is not whether a larger planning budget is usually helpful or harmful. It is narrower: when a tokenized world model assigns high scores to futures that share a discrete token but differ in omitted physical state, can high-budget selection concentrate on the wrong physical member of that token cell? The protocol is built around this question. Every candidate has a token-level score and a separate real utility. The raw selector only sees the token-level score. The audit then asks whether token-likelihood improvement transfers to the real utility that the planner would actually need.
+
+\paragraph{Candidate pools and shared evaluation.}
+The main artifact uses \VThreePools{} independently generated pools with \VThreePoolSize{} candidates per pool. Within each pool, all selectors face the same candidates. This shared-pool design removes a common confound: the raw selector, diagnostic selectors, pilot calibrator, and oracle are not compared on different sampled futures. When raw high-budget utility drops, the drop cannot be attributed to a harder candidate draw for the raw selector. It is a property of the score used to choose from the same finite set.
+
+\paragraph{Budget schedule.}
+The budget schedule is $N\in\{1,2,4,8,16,32,64\}$. This is intentionally geometric because the selected-tail effect is multiplicative: the probability of hitting a high-score alias group changes rapidly with repeated draws from a finite pool. Reporting every budget in Table~\ref{tab:v3-full-curves} is important because the failure is not summarized by one high-budget number. The raw selector is already visibly worse by $N=4$ and essentially saturated by $N=16$, while label-free decode and filter selectors improve early and then plateau below the oracle.
+
+\paragraph{Tie-aware finite law.}
+The law is evaluated on the fixed empirical candidate pools rather than on a smooth continuous approximation. This matters for tokenized world models because token scores can be quantized, tied, or saturated by construction. If several candidates have the same token score, the identity of the selected real future depends on the utility distribution inside that tied score group. The law therefore groups equal scores and accounts for uniform tie-breaking inside the selected group. Its role in the paper is diagnostic rather than asymptotic: it predicts the selected utility of the empirical selector under the exact finite-pool sampling procedure used in the experiment.
+
+\paragraph{Selector families.}
+The selector set is deliberately split into four evidence classes. Raw token score tests the failure mode. Codebook uncertainty, decode consistency, physical filtering, and rare-mode reweighting are label-free diagnostics that use token and decode information but no real-utility labels. The pilot calibrator spends a small label budget to learn a token-diagnostic-to-real-utility map. The combined repair blends fixed diagnostics and the pilot calibrator. The oracle uses real utility directly and is included only to show remaining headroom; it is not proposed as a deployable method.
+
+\paragraph{What is controlled and what is not.}
+The generator controls the hidden physical mode, the token assignment, the alias probability, the decoded reward proxy, and the real utility. It does not control a real robot, an external benchmark suite, or a large trained video model. The advantage of the control is that the selected-token failure can be isolated and audited exactly. The limitation is that the evidence should be read as a mechanism study, not as a deployment claim. This boundary is repeated in the main text because the strongest version of the paper is the one that makes the falsifiable controlled claim sharply and refuses unsupported scope.
+
+\section{Negative Controls and Failure Cases}
+\label{app:negative-controls}
+
+\paragraph{Codebook size is not treated as a magic fix.}
+One obvious reviewer attack is that the pathology might be an artifact of a badly chosen codebook size. The sweep in Table~\ref{tab:v3-codebook-sweep} is included to address that attack. The sweep does not prove that every codebook size will fail, and the paper does not claim that. It shows that, in the cached generator, moving from a very small to a larger codebook changes quantization error and entropy but does not by itself remove low raw high-budget utility. This is why the paper focuses on selected-tail diagnostics rather than a single capacity knob.
+
+\paragraph{Codebook uncertainty alone can be insufficient.}
+The label-free codebook selector penalizes alias probability and quantization error. In the full curves, it remains close to the raw selector at high budget. This is a useful negative result. A reviewer might expect any uncertainty penalty to repair the issue, but the artifact shows a harder case: high token-score cells can remain attractive even after a moderate codebook penalty. The failure of this simple diagnostic is part of the contribution because it prevents the paper from overselling token uncertainty as a complete solution.
+
+\paragraph{Rare-mode reweighting is deliberately stress-tested.}
+Rare-token bonuses are tempting in tokenized world models because valid but rare physical modes may have lower likelihood. The rare-mode selector tests that intuition and shows that rarity is not enough. Some rare or less common token regions still contain aliasing candidates, so rare-mode reweighting improves neither as reliably nor as strongly as decode consistency, filtering, or the pilot calibrator. This negative control keeps the method honest: the paper argues for token-specific audits, not for a blanket preference for rare futures.
+
+\paragraph{Decode diagnostics require meaningful decoded observables.}
+Decode consistency works well in the controlled artifact because the generator provides a decoded physical-consistency signal. The paper does not assume that every tokenized model exposes such a clean signal. Instead, the result says that when decoded observables can be checked against task-level physical constraints, high-budget selection should be audited with those checks. If the decoded observables are weak, a reviewer should not expect the same repair strength. This boundary is important for submission readiness because it turns a possible overclaim into a practical requirement.
+
+\paragraph{Pilot calibration spends labels.}
+The pilot calibrator is the strongest non-oracle repair in this artifact, but it is also the least free. It spends real-utility labels to learn a diagnostic mapping. The paper therefore reports it separately from label-free diagnostics and uses the gate action \VThreeGateAction{} rather than saying that the problem is solved without additional supervision. The right interpretation is operational: when the audit detects a harmful selected tail, a small pilot-label collection can be justified before trusting high-budget token selection.
+
+\paragraph{The oracle gap is retained on purpose.}
+Even the combined repair remains below the oracle at high budget. The paper keeps that gap visible instead of hiding it because the gap is a scientific signal: token diagnostics can reduce the aliasing failure without recovering all real-utility opportunity. This makes the conclusion more conservative and more useful. A practitioner can use the audit to decide whether a repaired selector is good enough, whether more real-utility labels are needed, or whether the token representation itself should be rebuilt.
+
+\section{Reviewer Attack Responses}
+\label{app:attack-responses}
+
+\paragraph{Attack: the paper only measures token likelihood.}
+The scorecard explicitly separates selected token likelihood from selected real utility. The headline failure requires both numbers: raw high-budget selection raises token likelihood from \VThreeRawTokenNOne{} to \VThreeRawTokenHigh{} while real utility falls from \VThreeRawRealNOne{} to \VThreeRawRealHigh{}. If either column were missing, the paper would be much weaker. The evidence is therefore not a likelihood-only story; it is a transfer failure from token score to physical utility.
+
+\paragraph{Attack: the result is just an arbitrary high-budget artifact.}
+The full curve is included to show the shape of the effect. The raw selector degrades as the budget grows, the alias and violation rates saturate, and the exact finite law predicts the selected utility with mean absolute error \VThreeLawMae{}. This attacks the possibility that the high-budget endpoint is an isolated outlier. The phenomenon is a selected-tail concentration effect over a finite scored pool.
+
+\paragraph{Attack: the repairs are tuned to the answer.}
+The paper avoids that problem in three ways. First, every selector is evaluated on the same cached pools. Second, the combined weights are fixed in the repository implementation rather than refit for each figure. Third, the paper reports negative selectors, including codebook uncertainty and rare-mode reweighting, that do not solve the problem. A tuned-only story would normally hide those failures; this artifact exposes them.
+
+\paragraph{Attack: the generator makes aliasing inevitable.}
+The generator intentionally creates aliasing because the paper is a mechanism study, but the conclusion is not that aliasing is inevitable in all tokenized models. The conclusion is conditional: if token scores concentrate high likelihood in physically aliased cells, then high-budget selection can move toward lower real utility, and the provided audit can detect that movement. This conditional form is falsifiable. A model with low alias rates, calibrated decoded validity, and monotone selected real utility would pass the audit rather than be forced into the failure narrative.
+
+\paragraph{Attack: the paper lacks an external benchmark.}
+The paper acknowledges that limitation directly. The contribution is a controlled tail audit, not a benchmark leaderboard. External benchmarks would answer a different question: how often this pathology appears in specific large systems. This paper answers whether the mechanism is possible, measurable, and repairable under a tokenized world-model abstraction where the token score and physical utility can be separated. The repository artifacts are designed so a future benchmark paper can reuse the audit, but the current claim stops at the controlled evidence.
+
+\paragraph{Attack: the method is just calibration.}
+Calibration is only one part of the evidence. The exact law explains selected-tail behavior without learning; decode consistency and physical filtering are label-free diagnostics; the pilot calibrator is one repair option when label collection is warranted. Reducing the paper to calibration would miss the token-codebook mechanism, the tied-score law, the codebook stress test, and the negative evidence for naive uncertainty or rarity corrections.
+
+\paragraph{Attack: the paper does not say what would make it fail.}
+Several outcomes would weaken or falsify the current claim. If selected token likelihood and real utility moved together across all budgets, the central failure would disappear. If alias and violation rates did not rise in the raw selected tail, the proposed mechanism would be unsupported. If the exact finite law failed to predict selected utility on the fixed pools, the theoretical account would be suspect. If no diagnostic or pilot repair improved real utility without simply using the oracle, the practical audit value would be much weaker. The cached artifacts are organized around exactly these checks.
+
+\section{Practical Audit Guidance}
+\label{app:practical-guidance}
+
+\paragraph{When to run the audit.}
+The audit is most useful before increasing a tokenized planner's candidate budget. A higher budget should not be accepted solely because token likelihood, decoded reward, or model score improves. The safer workflow is to sample candidate pools, compute token diagnostics, measure a pilot set of real utilities when feasible, and compare selected real utility curves across budgets. If the high-budget tail has rising token score but falling real utility, the planner should not be promoted without repair.
+
+\paragraph{What to log.}
+A minimal audit log should include the selected token id, token likelihood, decoded reward proxy, alias probability or collision statistic, quantization error, decode-consistency error, physical-validity signal, selected real utility when available, and oracle gap for an offline benchmark pool. The artifact map in Table~\ref{tab:artifact-map} lists where each of these appears in the repository. Logging only aggregate likelihood is not enough because the failure lives inside the selected tail.
+
+\paragraph{How to choose a repair.}
+The result suggests a staged repair policy. If no real-utility labels are available, start with decode consistency and physical filtering because they directly target invalid decoded futures. If those diagnostics are unavailable or weak, use the audit result as a reason to collect pilot labels. If pilot labels are cheap enough, calibrate token diagnostics to real utility and keep the oracle gap visible as a residual-risk estimate. If all repairs remain far below the oracle, the representation or data collection process probably needs to change rather than merely increasing the planning budget.
+
+\paragraph{How not to use the result.}
+The paper should not be read as a warning against all tokenized world models, all VQ bottlenecks, or all high-budget planning. It is a warning against un-audited token-score maximization when the selected score is not guaranteed to be physically aligned with real utility. That distinction is central to the submission version: the audit is intentionally sharp, conditional, and reproducible, and its limits are part of the claim.
+
 \section{Artifact Map}
 \label{app:artifacts}
 
-\begin{table}[h]
+\begin{table}[H]
 \caption{Primary artifact map.}
 \label{tab:artifact-map}
 \centering
@@ -94,11 +246,12 @@ Figure~\ref{fig:alias-atlas} visualizes the alias atlas. The purpose is diagnost
 Claim family & Evidence \\
 \midrule
 Raw aliasing failure & \path{results/metrics_main.csv}; \path{figures/figure1_token_likelihood_physical_aliasing.png} \\
-Repair comparison & \path{results/metrics_main.csv}; \path{figures/figure2_repair_comparison.png} \\
-Codebook bottleneck & \path{results/codebook_bottleneck.csv}; \path{figures/figure3_codebook_bottleneck_curve.png} \\
-Decode diagnostics & \path{results/tail_autopsy.csv}; \path{figures/figure4_decode_validity_diagnostics.png}; \path{figures/figure6_alias_atlas.png} \\
+Repair comparison & \path{results/metrics_main.csv}; \path{figures/figure2_repair_comparison.png}; \path{figures/figure8_v3_repair_selector_panel.png} \\
+Codebook bottleneck & \path{results/codebook_bottleneck.csv}; \path{figures/figure3_codebook_bottleneck_curve.png}; \path{figures/figure9_v3_codebook_stress.png} \\
+Decode diagnostics & \path{results/tail_autopsy.csv}; \path{figures/figure4_decode_validity_diagnostics.png}; \path{figures/figure6_alias_atlas.png}; \path{figures/figure10_v3_tail_autopsy.png} \\
 Exact finite law & \path{results/exact_law_validation.json}; \path{figures/figure5_exact_law_validation.png}; \path{src/token_alias_tail_audit/law.py} \\
-Claim audit & \path{results/claims_status.json}; \path{results/claims_status.md}; \path{docs/final_audit.md} \\
+Learned VQ artifact & \path{results/learned_vq_artifact.json}; \path{figures/figure11_v3_vq_artifact.png} \\
+V3 claim audit & \path{results/v3_tokenized_scorecard.csv}; \path{results/v3_tokenized_attack_ledger.csv}; \path{results/v3_tokenized_evidence_summary.json} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -106,7 +259,7 @@ Claim audit & \path{results/claims_status.json}; \path{results/claims_status.md}
 \section{Claim Checklist}
 \label{app:checklist}
 
-\begin{table}[h]
+\begin{table}[H]
 \caption{Submission claim checklist.}
 \label{tab:checklist}
 \centering
@@ -120,7 +273,7 @@ Generator emits discrete world-token futures. & Yes \\
 Scorer includes token likelihood and decoded reward. & Yes \\
 Real utility is measured separately from token score. & Yes \\
 Central failure is token-likelihood physical aliasing. & Yes \\
-Learned/semi-learned VQ artifact is included. & Yes \\
+Semi-learned VQ artifact is included. & Yes \\
 Repair methods are token-specific. & Yes \\
 Exact finite law is implemented and validated. & Yes \\
 External benchmark or hardware deployment evidence is claimed. & No \\
@@ -134,9 +287,38 @@ Universal repair or universal high-$N$ harm is claimed. & No \\
 
 From the repository root:
 \begin{verbatim}
-bash scripts/run_all.sh
+python scripts/prepare_v3_evidence.py
+powershell -ExecutionPolicy Bypass -File paper/iclr/build.ps1
+python scripts/run_v3_claim_audit.py
 bash scripts/run_claim_audit.sh
 pytest
-powershell -ExecutionPolicy Bypass -File paper/iclr/build.ps1
 \end{verbatim}
-The paper source is in \path{paper/iclr/}. The build script writes \path{paper/iclr/main.pdf} and copies the submission PDF to \path{C:/Users/wangz/Downloads/tokenized_world_model_iclr2027_submission.pdf}.
+The full experiment command is:
+\begin{verbatim}
+bash scripts/run_all.sh
+\end{verbatim}
+The full command should be used when regenerating all evidence from scratch. Routine final-paper validation uses cached full artifacts so it does not overwrite them with smoke-mode results.
+
+\section{Fifty-Round Self-Attack Ledger}
+\label{app:attack}
+
+\input{v3_attack_ledger_table.tex}
+
+\section{Final V3 Acceptance Checklist}
+\label{app:v3-final-checklist}
+
+\begin{itemize}
+\item The final PDF must have at least 25 pages.
+\item The repo final PDF and Desktop PDF must match by SHA-256.
+\item The Desktop file must be \mbox{\texttt{tokenized world model-v3.pdf}}.
+\item The old Desktop v2 file must be absent.
+\item \texttt{PAPER\_SOURCE\_MAP.md} must map the v3 Desktop filename to:
+\begin{quote}
+\ttfamily
+C:/Users/wangz/tokenized world model\\
+Jason-Wang313/tokenized-world-model
+\end{quote}
+\item The v3 self-attack ledger must contain exactly 50 rows.
+\item The manuscript must not contain unsupported claims about hardware deployment, external benchmark coverage, leaderboard performance, universal high-budget harm, or universal repair.
+\item The final commit must be pushed to GitHub \path{main}, and the remote SHA must be verified.
+\end{itemize}

@@ -1,0 +1,51 @@
+round,attack_id,reviewer_angle,failure_mode,harsh_question,defense_artifact_or_revision,status
+1,generic_budget,novelty,This could be a generic candidate-budget paper.,Would the paper still read the same if tokens were replaced by another architecture?,"Make codebook collisions, decode validity, hidden modes, rare tokens, and token-to-real calibration central.",pass
+2,synthetic_only,scope,The evidence is synthetic.,Does the paper imply deployment evidence?,"State controlled synthetic scope in abstract, limitations, audit, and checklist.",bounded
+3,token_bad,overclaim,The paper may imply tokenized world models are bad.,Does it generalize beyond aliasing cases?,Explicitly say token models are not generally indicted.,pass
+4,high_n_bad,overclaim,The paper may imply larger candidate pools always hurt.,Does high-N help when score and utility align?,"Explain the finite law as a tail amplifier, not an anti-N claim.",pass
+5,universal_repair,overclaim,Repair could be sold as universal.,What if aliasing is not detectable?,Limit repair to measurable aliasing or pilot labels.,pass
+6,real_robot,overclaim,No hardware validation.,Does the title or abstract imply robot deployment?,No real-robot claim; final audit checks boundary language.,pass
+7,external_benchmark,overclaim,No external benchmark.,Does codebook sweep become benchmark language?,Call it controlled codebook-size stress only.,pass
+8,sota,overclaim,No state-of-the-art token model.,Does learned VQ artifact imply SOTA?,Frame as semi-learned mechanism artifact.,pass
+9,bad_scorer,mechanism,This is just a bad scorer.,What does the selection law add?,The law shows top-score selection amplifies whatever the high-score tail contains.,pass
+10,law_generic,theory,The law is generic.,Is this a theoretical novelty paper?,Concede generic law; tokenized population defines the contribution.,bounded
+11,ties,theory,Token scores can tie.,Does the law handle ties?,Use finite tie-aware score groups.,pass
+12,mc_noise,theory,Monte Carlo validation may be noisy.,Is the law error small?,Report MAE and max error from exact-law validation.,pass
+13,alias_definition,mechanism,Alias is vague.,How is aliasing measured?,"Use codebook collision, alias probability, hidden-mode mismatch, and token-real gap.",pass
+14,decode_validity,mechanism,Physical invalidity could be a separate bug.,Is decode validity measured?,Report physical-violation and decode-consistency diagnostics.,pass
+15,hidden_mode,mechanism,Hidden modes are artificial.,Why include them?,They isolate physical distinctions omitted by tokenization.,bounded
+16,quantization,mechanism,Quantization error alone might explain failure.,Is collision separate from quantization?,Codebook sweep reports both collision and quantization.,pass
+17,rare_modes,mechanism,Rare valid futures might be excluded.,Does repair handle rare good tokens?,Rare-mode reweighting and pilot calibration are reported separately.,pass
+18,tail_autopsy,mechanism,Aggregate curves hide selected examples.,Can reviewers see what raw selects?,"Tail autopsy compares raw, combined, and oracle selected candidates.",pass
+19,single_codebook,scope,One codebook size is too narrow.,Does the effect survive K changes?,Use codebook bottleneck sweep across sizes.,pass
+20,pool_size,scope,Pool size may be too small.,How large is the candidate pool?,Report full mode with 150 pools and pool size 64.,pass
+21,repair_labels,leakage,Pilot calibration uses labels.,Are label-spending repairs separated?,Separate token-to-real calibration from no-label diagnostics.,pass
+22,diagnostic_hand_design,leakage,Repairs use hand-designed diagnostics.,Is that hidden?,"Treat diagnostics as controlled support, not deployment proof.",pass
+23,oracle_gap,claim strength,Repair is far from oracle.,Does the paper hide the gap?,Report combined and pilot oracle gaps explicitly.,pass
+24,codebook_uncertainty_weak,ablation,Codebook uncertainty alone is weak.,Is the weak baseline visible?,Report individual repair rows including codebook uncertainty.,pass
+25,decode_filter,ablation,Decode consistency and physical filter may drive all gains.,Are individual repairs separated?,"Report decode, filter, rare, codebook, pilot, combined, oracle.",pass
+26,random_baseline,baseline,Random selection could be enough.,Is random considered?,Keep random in experiment code and discuss selector baselines if reported.,pass
+27,pilot_overfit,calibration,Pilot calibration may overfit.,Are labels representative?,State pilot labels are controlled and require deployment refresh.,bounded
+28,gate_action,policy,Gate may be cosmetic.,Does it take a conservative action?,Gate returns collect_pilot_labels with reason in summary.,pass
+29,gate_deployment,policy,Gate could be treated as deployment certification.,Is it certified?,State gate is a controlled risk policy only.,pass
+30,physical_filter_deploy,policy,Physical filters require domain checks.,Are those available in the real world?,Limit to tasks with meaningful validity checks.,pass
+31,score_utility_gap,metric,Token-real gap may be confusing.,Is it defined?,"Define token score, real utility, token-real gap, alias and validity metrics.",pass
+32,confidence_intervals,statistics,Intervals may be missing.,Are uncertainty bands shown?,Use CI columns in metrics and describe them.,pass
+33,exact_law_same_pool,statistics,Law only holds for fixed pools.,Does paper imply distributional generality?,State fixed empirical pool assumption.,pass
+34,iid_sampling,statistics,Candidates may be correlated in real planners.,Does law cover correlated rollouts?,List correlated rollouts as limitation.,pass
+35,learned_vq_small,learned evidence,Learned VQ is tiny.,Is it oversold?,Frame as CPU semi-learned mechanism artifact.,bounded
+36,transition_stats,learned evidence,Transition model evidence is thin.,Are transition statistics reported?,Report transition self-probability and codebook entropy.,pass
+37,decoder_quality,learned evidence,Decoder quality may dominate.,Are decode errors measured?,Use decode-consistency and quantization diagnostics.,pass
+38,figures_too_few,presentation,Six figures are too thin for v3.,Are synthesis figures added?,"Add v3 scorecard, repair, bottleneck, tail, VQ, attack figures.",pass
+39,table_traceability,presentation,Claims need artifact traceability.,Can each claim map to a file?,Add v3 scorecard table and artifact inventory.,pass
+40,reviewer_attacks_short,presentation,Current reviewer attacks are too short.,Is the self-review broad enough?,Add exactly 50 attack rounds.,pass
+41,page_count,submission,11 pages is too short.,Does final PDF clear 25 pages?,V3 build requires >=25 pages.,pass
+42,desktop_mapping,workflow,Fresh agents may not find the repo.,Is Desktop source map updated?,V3 audit checks exact source-map row.,pass
+43,old_pdf,workflow,Old v2 could remain visible.,Is old Desktop PDF removed?,V3 build removes old v2.,pass
+44,github_main,workflow,Pushed branch might not be default.,Will main have final artifact?,Push final commit to main and verify remote SHA.,pass
+45,smoke_overwrite,reproducibility,Smoke run could overwrite full artifacts.,Will validation downgrade outputs?,Avoid smoke after full; use cached synthesis and claim audit.,pass
+46,ram,reproducibility,Full experiments could be memory-heavy.,How is RAM controlled?,"Use compact CSV/JSON, sequential runs, and cached synthesis.",pass
+47,pdf_hash,reproducibility,Repo and Desktop PDFs could diverge.,Are hashes checked?,V3 audit checks repo/Desktop SHA match.,pass
+48,claim_scan,reproducibility,Overclaims can creep into text.,Is text scanned?,V3 audit scans LaTeX plus base claim audit scans docs.,pass
+49,side_by_side,novelty,It may look like another paper in the batch.,Does the identity survive side-by-side review?,Token/codebook/decode vocabulary dominates all sections.,pass
+50,limitations,framing,Limitations could be boilerplate.,Are limits tied to evidence?,"Limitations name fixed pools, iid sampling, synthetic hidden modes, pilot labels, and no benchmarks.",pass
