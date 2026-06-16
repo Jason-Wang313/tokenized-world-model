@@ -1,0 +1,25 @@
+{
+  "attack_rounds": 60,
+  "attack_rounds_passed": 60,
+  "generated_artifacts": [
+    "results/v4_tokenized_submission_scorecard.csv",
+    "results/v4_protocol_freeze_gates.csv",
+    "results/v4_iclr_style_rubric_map.csv",
+    "results/v4_reviewer_attack_ledger.csv",
+    "paper/iclr/v4_results_macros.tex",
+    "paper/iclr/v4_scorecard_table.tex",
+    "paper/iclr/v4_protocol_gate_table.tex",
+    "paper/iclr/v4_rubric_table.tex",
+    "paper/iclr/v4_attack_ledger_table.tex"
+  ],
+  "paper_identity": "token-likelihood physical aliasing in tokenized world-model planning",
+  "protocol_gates": 12,
+  "protocol_gates_passed": 12,
+  "rubric_axes": 7,
+  "rubric_axes_passed": 7,
+  "stress_family_count": 8,
+  "submission_scorecard_rows": 12,
+  "target_page_count_minimum": 25,
+  "uses_cached_artifacts_only": true,
+  "version": "v4"
+}

@@ -252,6 +252,7 @@ Decode diagnostics & \path{results/tail_autopsy.csv}; \path{figures/figure4_deco
 Exact finite law & \path{results/exact_law_validation.json}; \path{figures/figure5_exact_law_validation.png}; \path{src/token_alias_tail_audit/law.py} \\
 Learned VQ artifact & \path{results/learned_vq_artifact.json}; \path{figures/figure11_v3_vq_artifact.png} \\
 V3 claim audit & \path{results/v3_tokenized_scorecard.csv}; \path{results/v3_tokenized_attack_ledger.csv}; \path{results/v3_tokenized_evidence_summary.json} \\
+V4 protocol and rubric audit & \path{results/v4_cached_evidence_summary.json}; \path{results/v4_tokenized_submission_scorecard.csv}; \path{results/v4_protocol_freeze_gates.csv}; \path{results/v4_iclr_style_rubric_map.csv}; \path{results/v4_reviewer_attack_ledger.csv} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -287,38 +288,46 @@ Universal repair or universal high-$N$ harm is claimed. & No \\
 
 From the repository root:
 \begin{verbatim}
-python scripts/prepare_v3_evidence.py
-powershell -ExecutionPolicy Bypass -File paper/iclr/build.ps1
-python scripts/run_v3_claim_audit.py
+python experiments/v4_cached_evidence.py
+python scripts/build_v4_paper.py
+python scripts/run_v4_claim_audit.py
 bash scripts/run_claim_audit.sh
-pytest
+python -m pytest -q
+python -m compileall src experiments scripts tests -q
 \end{verbatim}
 The full experiment command is:
 \begin{verbatim}
 bash scripts/run_all.sh
 \end{verbatim}
-The full command should be used when regenerating all evidence from scratch. Routine final-paper validation uses cached full artifacts so it does not overwrite them with smoke-mode results.
+The full command should be used when regenerating all evidence from scratch. Routine final-paper validation uses cached full artifacts so it does not overwrite them with smoke-mode results. The older v3 synthesis command remains available for historical artifact regeneration, but the final Desktop artifact is built through the v4 path above.
 
-\section{Fifty-Round Self-Attack Ledger}
+\section{Self-Attack Ledgers}
 \label{app:attack}
 
+\paragraph{V3 base ledger.}
 \input{v3_attack_ledger_table.tex}
 
-\section{Final V3 Acceptance Checklist}
-\label{app:v3-final-checklist}
+\paragraph{V4 final ledger.}
+The v4 ledger extends the base attacks to citation surface, benchmark-boundary, protocol-freeze, rubric, source-firewall, and fresh-session reproducibility failures.
+
+\input{v4_attack_ledger_table.tex}
+
+\section{Final V4 Acceptance Checklist}
+\label{app:v4-final-checklist}
 
 \begin{itemize}
 \item The final PDF must have at least 25 pages.
 \item The repo final PDF and Desktop PDF must match by SHA-256.
-\item The Desktop file must be \mbox{\texttt{tokenized world model-v3.pdf}}.
-\item The old Desktop v2 file must be absent.
-\item \texttt{PAPER\_SOURCE\_MAP.md} must map the v3 Desktop filename to:
+\item The Desktop file must be \mbox{\texttt{tokenized world model-v4.pdf}}.
+\item The old Desktop v3 and v2 files must be absent.
+\item \texttt{PAPER\_SOURCE\_MAP.md} must map the v4 Desktop filename to:
 \begin{quote}
 \ttfamily
 C:/Users/wangz/tokenized world model\\
 Jason-Wang313/tokenized-world-model
 \end{quote}
-\item The v3 self-attack ledger must contain exactly 50 rows.
+\item The v4 self-attack ledger must contain exactly 60 rows.
+\item The v4 protocol gates must pass 12/12, and the rubric map must pass 7/7.
 \item The manuscript must not contain unsupported claims about hardware deployment, external benchmark coverage, leaderboard performance, universal high-budget harm, or universal repair.
 \item The final commit must be pushed to GitHub \path{main}, and the remote SHA must be verified.
 \end{itemize}

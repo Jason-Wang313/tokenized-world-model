@@ -11,10 +11,13 @@ The repo is diagnosis plus controlled repair. It tests token-specific safeguards
 ## Quickstart
 
 ```bash
+python experiments/v4_cached_evidence.py
+python scripts/build_v4_paper.py
+python scripts/run_v4_claim_audit.py
 bash scripts/run_smoke.sh
 bash scripts/run_all.sh
 bash scripts/run_claim_audit.sh
-pytest
+python -m pytest -q
 ```
 
 ## What Is Included
@@ -26,17 +29,23 @@ pytest
 - Decode/physical-validity diagnostics for teleportation, collision, impossible contact, and hidden-mode mismatch.
 - Repair selectors and a deployment gate that can block or reduce high-`N` selection when aliasing is detected.
 - Figures, claim audit, paper skeleton, reviewer-risk notes, and final audit.
+- V4 protocol-freeze gates, ICLR-style rubric map, source firewall, and 60-round reviewer attack ledger.
 
 ## Main Artifacts
 
+- `paper/final/tokenized world model-v4.pdf`: final submission PDF copied to the Desktop by the v4 build.
+- `paper/final/tokenized_world_model_v4_manifest.json`: page count, SHA-256, Desktop path, source-map row, and GitHub repo.
 - `paper/iclr/main.pdf`: ICLR-style paper draft.
 - `paper/iclr/main.tex`: LaTeX source for the paper draft.
 - `docs/theory.md`: formal setup and exact finite law.
+- `docs/v4_execution_plan.md`: frozen v4 development, reporting, and claim-gate plan.
 - `results/metrics_main.csv`: raw and repaired score-tail curves.
 - `results/codebook_bottleneck.csv`: codebook-size stress sweep.
 - `results/exact_law_validation.json`: Monte Carlo validation of the exact law.
 - `results/learned_vq_artifact.json`: learned/semi-learned tokenized model artifact.
 - `results/claims_status.json`: claim-to-evidence status.
+- `results/v4_cached_evidence_summary.json`: v4 scorecard, protocol, rubric, and attack counts.
+- `results/v4_reviewer_attack_ledger.csv`: final 60-round reviewer self-attack ledger.
 - `figures/figure1_token_likelihood_physical_aliasing.png`
 - `figures/figure2_repair_comparison.png`
 - `figures/figure3_codebook_bottleneck_curve.png`
@@ -46,4 +55,4 @@ pytest
 
 ## Scope
 
-This is a controlled paper package for tokenized/VQ world-model planning. It is distinct from imagined-vs-real dynamics mismatch in WAM-style studies: here the scientific object is the discrete codebook/token bottleneck, token likelihood, decode consistency, and token-to-real aliasing. The repair claims are limited to settings where aliasing is measurable by token-specific diagnostics or a small pilot calibration set.
+This is a controlled paper package for tokenized/VQ world-model planning. It is source-firewalled from the rest of the paper batch: here the scientific object is the discrete codebook/token bottleneck, token likelihood, decode consistency, and token-to-real aliasing. The repair claims are limited to settings where aliasing is measurable by token-specific diagnostics or a small pilot calibration set.

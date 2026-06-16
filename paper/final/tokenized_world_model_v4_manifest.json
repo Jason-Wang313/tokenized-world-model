@@ -1,0 +1,26 @@
+{
+  "final_name": "tokenized world model-v4.pdf",
+  "pages": 31,
+  "sha256": "43754cb2f1f1b85181658b4fe3bd606a665853c4c3f0a7119b3b06da176ed772",
+  "repo_pdf": "C:\\Users\\wangz\\tokenized world model\\paper\\final\\tokenized world model-v4.pdf",
+  "desktop_pdf": "C:\\Users\\wangz\\OneDrive\\Desktop\\tokenized world model-v4.pdf",
+  "source_map": "C:\\Users\\wangz\\OneDrive\\Desktop\\PAPER_SOURCE_MAP.md",
+  "source_map_row": "| `tokenized world model-v4.pdf` | `C:\\Users\\wangz\\tokenized world model` | `Jason-Wang313/tokenized-world-model` |",
+  "github_repo": "Jason-Wang313/tokenized-world-model",
+  "old_desktop_pdfs_removed": [
+    "tokenized world model-v3.pdf",
+    "tokenized world model-v2.pdf"
+  ],
+  "required_pdf_markers": [
+    "token-likelihood physical aliasing",
+    "v4 tokenized-world submission scorecard",
+    "v4 protocol-freeze gates",
+    "iclr-style rubric map",
+    "60-round v4 reviewer attack ledger",
+    "token-to-real calibration",
+    "codebook",
+    "physical aliasing",
+    "source firewall"
+  ],
+  "built_at_utc": "2026-06-16T05:53:57.194332+00:00"
+}

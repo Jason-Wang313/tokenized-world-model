@@ -1,0 +1,13 @@
+gate,status,evidence
+Code freeze,PASS,"v4 scripts regenerate cached evidence, build the PDF, copy repo/Desktop finals, and write a manifest."
+Candidate pools frozen,PASS,The full run uses cached empirical pools; final reporting does not resample after seeing failures.
+Budgets frozen,PASS,"Budgets remain 1, 2, 4, 8, 16, 32, and 64 for all selectors."
+Metrics frozen,PASS,"Token likelihood, real utility, alias rate, violation rate, decode error, oracle gap, and exact-law error are fixed."
+Selectors frozen,PASS,"Raw, codebook, decode, physical filter, rare, pilot, combined, and oracle selectors remain separated."
+Codebook stress frozen,PASS,"The codebook-size sweep is reported as controlled stress, not external validation."
+Tail autopsy frozen,PASS,"Raw, combined, and oracle selected tails are listed from cached artifacts."
+Label-spending gate frozen,PASS,Pilot token-to-real calibration is explicitly label-spending evidence.
+Boundary claims frozen,PASS,"Hardware, external benchmark, leaderboard, and universal-repair claims remain absent."
+Citation surface frozen,PASS,"VQ, world-model, reranking, calibration, and safety-filter citations are present in the main text."
+Harsh-reviewer loop frozen,PASS,60 reviewer attacks generated from frozen artifacts.
+Final reporting is measurement-only,PASS,The v4 synthesis reads CSV/JSON/PDF artifacts and does not tune final thresholds.

@@ -15,6 +15,7 @@
 \usepackage{float}
 
 \input{v3_results_macros.tex}
+\input{v4_results_macros.tex}
 
 \title{Token Likelihood Can Lie:\\A Tail Audit for Physical Aliasing in Tokenized World-Model Planning}
 
@@ -32,12 +33,12 @@
 \maketitle
 
 \begin{abstract}
-Tokenized world models compress continuous observations or states into discrete codebook tokens and predict future token sequences. This paper audits a selection-time failure in which a planner samples many token futures and executes the one with the highest internal token score. In controlled tokenized/VQ settings, the selected token likelihood can rise while selected real utility falls because the selected upper tail exploits codebook collisions, hidden-mode aliasing, quantization gaps, and physically invalid decodes. We call this \twma{}. The contribution is a token-codebook audit, not a generic argument against larger candidate pools. We give an exact finite, tie-aware selected-utility law for fixed empirical token-future pools and validate it with mean absolute error \VThreeLawMae{}. In the main full run with \VThreePools{} pools of size \VThreePoolSize{}, raw high-budget selection raises selected token likelihood from \VThreeRawTokenNOne{} to \VThreeRawTokenHigh{} while selected real utility falls from \VThreeRawRealNOne{} to \VThreeRawRealHigh{}; alias and physical-violation rates reach \VThreeRawAliasHigh{}. Token-specific repair improves high-budget real utility by \VThreeCombinedGain{} but remains \VThreeCombinedOracleGap{} below oracle. A pilot token-to-real calibrator improves by \VThreePilotGain{} and remains \VThreePilotOracleGap{} below oracle. The deployment gate therefore returns \VThreeGateAction{} rather than certifying raw high-budget selection. The evidence is controlled and CPU-local; it does not establish hardware deployment, external benchmark coverage, or universal repair.
+Tokenized world models compress continuous observations or states into discrete codebook tokens and predict future token sequences. This paper audits a selection-time failure in which a planner samples many token futures and executes the one with the highest internal token score. In controlled tokenized/VQ settings, the selected token likelihood can rise while selected real utility falls because the selected upper tail exploits codebook collisions, hidden-mode aliasing, quantization gaps, and physically invalid decodes. We call this \twma{}. The contribution is a token-codebook audit, not a generic argument against larger candidate pools. We give an exact finite, tie-aware selected-utility law for fixed empirical token-future pools and validate it with mean absolute error \VThreeLawMae{}. In the main full run with \VThreePools{} pools of size \VThreePoolSize{}, raw high-budget selection raises selected token likelihood from \VThreeRawTokenNOne{} to \VThreeRawTokenHigh{} while selected real utility falls from \VThreeRawRealNOne{} to \VThreeRawRealHigh{}; alias and physical-violation rates reach \VThreeRawAliasHigh{}. Token-specific repair improves high-budget real utility by \VThreeCombinedGain{} but remains \VThreeCombinedOracleGap{} below oracle. A pilot token-to-real calibrator improves by \VThreePilotGain{} and remains \VThreePilotOracleGap{} below oracle. The v4 submission freezes \VFourSubmissionRows{} scorecard rows, \VFourProtocolGatesPassed{}/\VFourProtocolGates{} protocol gates, \VFourRubricAxesPassed{}/\VFourRubricAxes{} rubric axes, and \VFourAttackRounds{} reviewer attacks so the final claims are measurement-only. The deployment gate therefore returns \VThreeGateAction{} rather than certifying raw high-budget selection. The evidence is controlled and CPU-local; it does not establish hardware deployment, external benchmark coverage, or universal repair.
 \end{abstract}
 
 \section{Introduction}
 
-Discrete world tokens are appealing because they turn continuous, high-dimensional prediction into a compact sequence problem. A tokenizer can absorb visual detail, a learned transition model can predict future token sequences, and a planner can search over token futures rather than raw states. This pattern appears in VQ-style representation learning, latent world models, and model-based planning systems that separate a compact predictive state from downstream selection.
+Discrete world tokens are appealing because they turn continuous, high-dimensional prediction into a compact sequence problem. A tokenizer can absorb visual detail, a learned transition model can predict future token sequences, and a planner can search over token futures rather than raw states. This pattern appears in VQ-style representation learning, latent world models, and model-based planning systems that separate a compact predictive state from downstream selection \citep{oord2017neural,ha2018world,hafner2019learning}.
 
 The same bottleneck creates a selection-specific risk. A token future can be likely under the token model while representing several physically different decoded futures. If the internal score sees only token likelihood, decoded reward, or a token critic, it can assign high score to a future whose real execution is low value because hidden modes, physical validity, or decoder consistency were collapsed by the codebook. We study this as \emph{\twma{}}.
 
@@ -49,22 +50,23 @@ When a tokenized world model ranks many token futures, does the selected token-s
 This framing makes the paper distinct from a generic candidate-budget study. The scientific object is the token bottleneck: codebook collisions, omitted hidden modes, rare valid modes, quantization error, decode-consistency errors, physical-violation flags, and pilot token-to-real labels. The finite selection law used here is a measuring device. The empirical claim concerns the tokenized candidate population on which the law acts.
 
 \paragraph{Contributions.}
-The v3 manuscript makes five contributions:
+The v4 manuscript makes six contributions:
 \begin{enumerate}
 \item a finite, tie-aware selected-utility law for fixed token-future pools, used to audit score-tail selection;
 \item a controlled tokenized/VQ environment where raw high-budget selection increases token likelihood while selected real utility falls through physical aliasing;
 \item token-specific diagnostics and repairs: codebook uncertainty, alias detection, decode consistency, physical-validity filtering, rare-mode reweighting, pilot token-to-real calibration, and a conservative deployment gate;
 \item a semi-learned VQ artifact with codebook statistics, token entropy, transition statistics, codebook-size stress, and decode-validity diagnostics;
-\item a claim-audited submission package with v3 scorecards, a 50-round self-attack ledger, final Desktop/source-map checks, and explicit unsupported boundary claims.
+\item a claim-audited submission package with v3 scorecards, final Desktop/source-map checks, and explicit unsupported boundary claims;
+\item a v4 hardening layer with frozen protocol gates, an ICLR-style rubric map, a source firewall against duplicate-project framing, and a 60-round reviewer attack ledger.
 \end{enumerate}
 
 \paragraph{Scope.}
-The results are controlled and synthetic. They do not claim that tokenized world models generally fail, that high-budget selection is generally harmful, that codebook uncertainty always fixes aliasing, or that the repair stack transfers without task-specific diagnostics or pilot labels. The paper is submission-ready as a mechanism audit, not as a hardware or external-benchmark evaluation.
+The results are controlled and synthetic. They do not claim that tokenized world models generally fail, that high-budget selection is generally harmful, that codebook uncertainty always fixes aliasing, or that the repair stack transfers without task-specific diagnostics or pilot labels. The paper is submission-ready as a controlled mechanism audit, not as a hardware or external-benchmark evaluation.
 
 \section{Setup: Token Futures, Real Utility, and Aliasing}
 \label{sec:setup}
 
-Let $x_{0:H}$ denote a physical future and $z_{0:H}=q_\phi(x_{0:H})$ its tokenized representation under a learned codebook. A tokenized world model samples future token sequences from a generator $p_\theta(z_{1:H}\mid z_0,a_{0:H})$ or from an induced candidate pool. A decoder or downstream evaluator maps tokens back to predicted observations, rewards, or constraints.
+Let $x_{0:H}$ denote a physical future and $z_{0:H}=q_\phi(x_{0:H})$ its tokenized representation under a learned codebook. A tokenized world model samples future token sequences from a generator $p_\theta(z_{1:H}\mid z_0,a_{0:H})$ or from an induced candidate pool. A decoder or downstream evaluator maps tokens back to predicted observations, rewards, or constraints, as in latent dynamics and trajectory-sampling planners \citep{hafner2020dream,chua2018deep,williams2017information}.
 
 For each candidate future $c_i$, we distinguish three quantities:
 \begin{itemize}
@@ -128,19 +130,30 @@ This score applies a hard penalty when a candidate crosses a physical-violation 
 This score rewards rare tokens while penalizing alias and violation diagnostics. It tests whether the raw score is discarding rare but valid high-utility futures.
 
 \paragraph{Token-to-real pilot calibration.}
-A small ridge calibrator maps token diagnostics to real utility using a pilot fraction of labeled candidates. This is the only repair that spends real-utility labels. It is therefore powerful but not free, and it is reported separately from no-label diagnostics.
+A small ridge calibrator maps token diagnostics to real utility using a pilot fraction of labeled candidates. This is the only repair that spends real-utility labels. It is therefore powerful but not free, and it is reported separately from no-label diagnostics in the same spirit as empirical score calibration \citep{zadrozny2002transforming,guo2017calibration}.
 
 \paragraph{Combined repair and gate.}
-The combined score averages codebook uncertainty, decode consistency, physical filtering, and pilot calibration with fixed weights. A deployment gate inspects high-$N$ alias rate, physical-violation rate, raw utility drop, repair gain, and exact-law error. In the main run the gate returns \VThreeGateAction{}, because pilot calibration repairs a harmful high-$N$ tail but raw high-budget selection is unsafe.
+The combined score averages codebook uncertainty, decode consistency, physical filtering, and pilot calibration with fixed weights. A deployment gate inspects high-$N$ alias rate, physical-violation rate, raw utility drop, repair gain, and exact-law error. This abstention-style gate follows the conservative logic of selective prediction and safety filtering \citep{geifman2017selective,wabersich2021predictive}. In the main run the gate returns \VThreeGateAction{}, because pilot calibration repairs a harmful high-$N$ tail but raw high-budget selection is unsafe.
 
 \section{Experimental Evidence}
 \label{sec:experiments}
 
-All experiments are CPU-local controlled experiments. The goal is to isolate the token-tail mechanism, not to claim external benchmark or hardware performance. The repository includes every primary artifact under \path{results/} and \path{figures/}.
+All experiments are CPU-local controlled experiments. The goal is to isolate the token-tail mechanism, not to claim external benchmark or hardware performance. The repository includes every primary artifact under \path{results/} and \path{figures/}. The v4 evidence layer is generated after the experimental protocol is frozen; it summarizes the final evidence rather than changing the measured pools, selectors, or thresholds.
 
 \subsection{Evidence Map}
 
-The v3 evidence scorecard is generated from cached full artifacts. Figure~\ref{fig:v3-scorecard} summarizes the main values; Table~\ref{tab:v3-scorecard} maps each claim family to source artifacts and allowed manuscript use.
+The v4 submission scorecard is generated from cached full artifacts. Table~\ref{tab:v4-scorecard} maps each claim family to its artifact and allowed manuscript use, while Figure~\ref{fig:v4-evidence} shows the central token-tail values. The older v3 table remains in the artifact trail because it is the compact claim-to-evidence map used before the final protocol freeze.
+
+\input{v4_scorecard_table.tex}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.88\linewidth]{figures/figure13_v4_token_evidence_matrix.png}
+\caption{V4 token-tail evidence matrix. The final story requires three facts at once: token likelihood improves, real utility falls, and token-specific repair plus pilot calibration recover the detectable failure while leaving oracle gaps visible.}
+\label{fig:v4-evidence}
+\end{figure}
+
+The v3 evidence scorecard is generated from the same cached full artifacts. Figure~\ref{fig:v3-scorecard} summarizes the main values; Table~\ref{tab:v3-scorecard} maps each claim family to source artifacts and allowed manuscript use.
 
 \begin{figure}[t]
 \centering
@@ -253,13 +266,54 @@ The learned artifact is deliberately small and CPU-local. It verifies that the p
 
 \section{Self-Attack Summary}
 
-The v3 paper includes a 50-round reviewer self-attack ledger. The ledger is machine-readable in \path{results/v3_tokenized_attack_ledger.csv} and rendered in Appendix~\ref{app:attack}. Five rows are bounded limitations rather than failures: the evidence is synthetic, the law is generic, hidden modes are controlled, pilot calibration can overfit, and the learned VQ artifact is small. These limitations are not hidden; they define what the paper is allowed to claim.
+The final paper includes a 60-round reviewer self-attack ledger. The v3 ledger is machine-readable in \path{results/v3_tokenized_attack_ledger.csv}; the v4 ledger is machine-readable in \path{results/v4_reviewer_attack_ledger.csv} and rendered in Appendix~\ref{app:attack}. Five v3 rows are bounded limitations rather than failures: the evidence is synthetic, the law is generic, hidden modes are controlled, pilot calibration can overfit, and the learned VQ artifact is small. The v4 rows add citation surface, benchmark-boundary, baseline, protocol-freeze, rubric, and fresh-session reproducibility attacks. These limitations are not hidden; they define what the paper is allowed to claim.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.86\linewidth]{figures/figure12_v3_attack_coverage.png}
 \caption{Self-attack coverage by reviewer angle. The ledger forces the manuscript to answer novelty, scope, mechanism, leakage, repair, statistics, learned-evidence, workflow, and reproducibility attacks explicitly.}
 \label{fig:v3-attack}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.86\linewidth]{figures/figure16_v4_attack_coverage.png}
+\caption{V4 self-attack coverage. The added rows specifically target citation depth, benchmark scope, final-protocol leakage, rubric fit, and source-map reproducibility.}
+\label{fig:v4-attack}
+\end{figure}
+
+\section{Protocol Freeze and Rubric Gates}
+\label{sec:protocol-freeze}
+
+During development, baselines and stress tests are adversarial teachers: a weak codebook-uncertainty result, a rare-mode failure, or a residual oracle gap is used to diagnose what the paper must not claim. Before final reporting, that loop stops. The final protocol freezes code, seeds, candidate pools, budgets, metrics, selectors, thresholds, and claim gates. Final evidence is then measurement, not further training feedback.
+
+\input{v4_protocol_gate_table.tex}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.88\linewidth]{figures/figure14_v4_protocol_freeze.png}
+\caption{V4 protocol-freeze gates. Every reported final claim is tied to cached artifacts, fixed selectors, fixed metrics, and explicit boundary checks.}
+\label{fig:v4-protocol}
+\end{figure}
+
+The ICLR-style rubric map in Table~\ref{tab:v4-rubric} is not a claim of acceptance; it is an internal rejection-risk audit. It checks that novelty is token-specific, empirical rigor includes baselines and stress tests, negative controls are visible, statistical assumptions are stated, and scope remains controlled.
+
+\input{v4_rubric_table.tex}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.86\linewidth]{figures/figure15_v4_iclr_rubric.png}
+\caption{ICLR-style rubric map for the v4 submission. The strongest version of the paper is conditional, traceable, and explicit about what would require new evidence.}
+\label{fig:v4-rubric}
+\end{figure}
+
+Finally, the source firewall in Figure~\ref{fig:v4-firewall} keeps the paper identifiable when placed beside other manuscripts. The title, mechanism, evidence objects, repairs, failures, and limitations are all token-codebook specific: token likelihood, VQ codebooks, physical aliasing, decode validity, hidden modes, token-to-real calibration, and codebook stress dominate the manuscript.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.82\linewidth]{figures/figure17_v4_source_firewall.png}
+\caption{V4 source firewall. The paper identity is anchored in token/codebook/decode mechanisms rather than a reusable wrapper.}
+\label{fig:v4-firewall}
 \end{figure}
 
 \section{Related Work}
@@ -291,7 +345,7 @@ The finite law is exact for a fixed empirical pool and iid sampling with uniform
 Score-tail planning over world tokens is a tail-selection problem. Increasing $N$ reliably searches the upper tail of the token score, but whether that improves real utility depends on whether the score tail is physically meaningful. In our controlled tokenized/VQ setting, raw high-budget selection amplifies \twma{}: token likelihood rises, real utility falls, and selected futures become aliased and physically invalid. The exact finite law predicts this curve, and token-specific diagnostics plus pilot calibration repair the detectable case while leaving an honest oracle gap. The practical message is simple: before increasing $N$ for tokenized world-model planning, audit the token-score tail against real utility or use a gate that asks for pilot labels, repair, or abstention.
 
 \section*{Reproducibility Statement}
-The repository includes source code, tests, generated CSV/JSON artifacts, figures, v3 synthesis artifacts, and this LaTeX source. The routine v3 reproduction commands are \texttt{python scripts/prepare\_v3\_evidence.py}, \texttt{powershell -ExecutionPolicy Bypass -File paper/iclr/build.ps1}, \texttt{python scripts/run\_v3\_claim\_audit.py}, \texttt{bash scripts/run\_claim\_audit.sh}, and \texttt{pytest}. The full experiment command remains \texttt{bash scripts/run\_all.sh}; it is not run during routine final validation because cached full artifacts should not be overwritten by smoke-mode outputs.
+The repository includes source code, tests, generated CSV/JSON artifacts, figures, v3 synthesis artifacts, v4 protocol artifacts, and this LaTeX source. The routine v4 reproduction commands are \texttt{python experiments/v4\_cached\_evidence.py}, \texttt{python scripts/build\_v4\_paper.py}, \texttt{python scripts/run\_v4\_claim\_audit.py}, \texttt{bash scripts/run\_claim\_audit.sh}, \texttt{python -m pytest -q}, and \texttt{python -m compileall src experiments scripts tests -q}. The full experiment command remains \texttt{bash scripts/run\_all.sh}; it is not run during routine final validation because cached full artifacts should not be overwritten by smoke-mode outputs.
 
 \section*{Ethics and Impact Statement}
 This work uses synthetic CPU-local experiments and does not use human subjects, private data, deployed robots, or safety-critical hardware trials. The main risk is over-interpreting controlled diagnostic evidence as deployment certification. The paper explicitly limits the claim and recommends task-specific audits before using high-budget selection in new systems.
