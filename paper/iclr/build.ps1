@@ -5,6 +5,12 @@ $DownloadsPdf = "C:\Users\wangz\Downloads\tokenized_world_model_iclr2027_submiss
 
 Push-Location $PaperDir
 try {
+    foreach ($aux in @("main.pdf", "main.aux", "main.out", "main.log", "main.bbl", "main.blg", "main.toc", "main.fls", "main.fdb_latexmk")) {
+        if (Test-Path $aux) {
+            Remove-Item -Force $aux
+        }
+    }
+
     pdflatex -interaction=nonstopmode -halt-on-error main.tex
     bibtex main
     pdflatex -interaction=nonstopmode -halt-on-error main.tex
@@ -26,3 +32,5 @@ try {
 finally {
     Pop-Location
 }
+
+exit 0

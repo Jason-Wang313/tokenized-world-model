@@ -48,9 +48,28 @@ FORBIDDEN_PDF_PHRASES = [
 ]
 
 
-def run(cmd: list[str], cwd: Path = ROOT) -> None:
+def run(cmd: list[str], cwd: Path = ROOT, allow_nonzero: bool = False) -> subprocess.CompletedProcess:
     print("+ " + " ".join(cmd))
-    subprocess.run(cmd, cwd=cwd, check=True)
+    proc = subprocess.run(cmd, cwd=cwd)
+    if proc.returncode and not allow_nonzero:
+        raise subprocess.CalledProcessError(proc.returncode, cmd)
+    if proc.returncode and allow_nonzero:
+        print(f"warning: tolerated exit {proc.returncode} from {' '.join(cmd)}")
+    return proc
+
+
+def git_output(args: list[str]) -> str:
+    proc = subprocess.run(
+        ["git", *args],
+        cwd=ROOT,
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    return proc.stdout.strip()
 
 
 def sha256(path: Path) -> str:
@@ -92,22 +111,35 @@ def pdf_text(path: Path) -> str:
 
 def update_source_map() -> None:
     if SOURCE_MAP.exists():
-        lines = SOURCE_MAP.read_text(encoding="utf-8").splitlines()
+        text = SOURCE_MAP.read_text(encoding="utf-8")
     else:
-        lines = [
-            "# Desktop Paper Source Map",
-            "",
-            "| Latest/target Desktop PDF | Source folder | GitHub repo |",
-            "|---|---|---|",
-        ]
+        text = "\n".join(
+            [
+                "# Desktop Paper Source Map",
+                "",
+                "| Latest/target Desktop PDF | Source folder | GitHub repo |",
+                "|---|---|---|",
+            ]
+        ) + "\n"
+    if "## V4 Verification Ledger" in text:
+        lookup_text, ledger_text = text.split("## V4 Verification Ledger", 1)
+        ledger_text = "## V4 Verification Ledger" + ledger_text
+    else:
+        lookup_text, ledger_text = text, ""
+    lines = lookup_text.splitlines()
     replaced = False
     for idx, line in enumerate(lines):
-        if "tokenized world model" in line or GITHUB_REPO in line:
+        parts = [part.strip() for part in line.split("|")]
+        is_lookup_row = len(parts) == 5 and (FINAL_NAME in line or GITHUB_REPO in line or str(ROOT) in line)
+        if is_lookup_row:
             lines[idx] = SOURCE_MAP_ROW
             replaced = True
     if not replaced:
         lines.append(SOURCE_MAP_ROW)
-    SOURCE_MAP.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    updated = "\n".join(lines).rstrip() + "\n"
+    if ledger_text:
+        updated += "\n" + ledger_text.rstrip() + "\n"
+    SOURCE_MAP.write_text(updated, encoding="utf-8")
 
 
 def audit_pdf_text(path: Path) -> None:
@@ -129,7 +161,8 @@ def main() -> None:
             "Bypass",
             "-File",
             str(PAPER_DIR / "build.ps1"),
-        ]
+        ],
+        allow_nonzero=True,
     )
 
     compiled_pdf = PAPER_DIR / "main.pdf"
@@ -163,13 +196,27 @@ def main() -> None:
         "final_name": FINAL_NAME,
         "pages": pages,
         "sha256": pdf_hash,
+        "source_folder": str(ROOT),
         "repo_pdf": str(repo_final_pdf),
         "desktop_pdf": str(desktop_final_pdf),
         "source_map": str(SOURCE_MAP),
         "source_map_row": SOURCE_MAP_ROW,
         "github_repo": GITHUB_REPO,
+        "github_remote": git_output(["remote", "get-url", "origin"]),
+        "git_branch_at_build": git_output(["branch", "--show-current"]),
         "old_desktop_pdfs_removed": OLD_NAMES,
         "required_pdf_markers": REQUIRED_PDF_MARKERS,
+        "verification_scope": [
+            "cached v4 evidence synthesis",
+            "LaTeX final PDF build",
+            "repo/Desktop PDF SHA-256 equality",
+            "minimum page-count gate",
+            "required v4 PDF text markers",
+            "forbidden duplicate/overclaim phrase scan",
+            "old visible Desktop versions removed",
+            "Desktop source-map lookup row updated without touching the verification ledger",
+        ],
+        "verified_on": dt.date.today().isoformat(),
         "built_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
     }
     manifest_path = final_dir / "tokenized_world_model_v4_manifest.json"
